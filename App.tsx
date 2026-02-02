@@ -78,7 +78,7 @@ const App: React.FC = () => {
   };
 
   const handleSaveEmployee = async (emp: Employee) => {
-    // Pastikan semua field yang opsional dikonversi ke null jika undefined
+    // Mapping payload harus sesuai persis dengan kolom di Database (case-sensitive)
     const payload = {
       id: emp.id,
       nip: emp.nip || '',
@@ -105,32 +105,36 @@ const App: React.FC = () => {
 
     if (isSupabaseConfigured && supabase) {
       try {
+        let error;
         if (selectedEmployee) {
-          const { error } = await supabase.from('employees').update(payload).eq('id', emp.id);
-          if (error) throw error;
-          setEmployees(prev => prev.map(e => e.id === emp.id ? (payload as Employee) : e));
-          setToast({ message: 'Data Cloud diperbarui!', type: 'success' });
+          const result = await supabase.from('employees').update(payload).eq('id', emp.id);
+          error = result.error;
         } else {
-          const { error } = await supabase.from('employees').insert([payload]);
-          if (error) throw error;
-          setEmployees(prev => [payload as Employee, ...prev]);
-          setToast({ message: 'Tersimpan di Cloud!', type: 'success' });
+          const result = await supabase.from('employees').insert([payload]);
+          error = result.error;
         }
+
+        if (error) throw error;
+
+        // Refresh data lokal setelah simpan berhasil
+        await fetchEmployees();
+        setToast({ message: 'Berhasil sinkronisasi dengan Cloud!', type: 'success' });
       } catch (err: any) {
-        console.error("Supabase Save Error Details:", err);
-        let msg = err.message;
-        if (msg.includes('column') || msg.includes('find')) {
-          msg = "Struktur database belum siap. Silakan jalankan SQL Fix di Supabase Dashboard.";
+        console.error("Database Save Error:", err);
+        let errorMsg = err.message;
+        if (errorMsg.includes('column') || errorMsg.includes('find')) {
+          errorMsg = "Database belum siap. Pastikan sudah menjalankan SQL Fix di Supabase Dashboard.";
         }
-        setToast({ message: 'Error: ' + msg, type: 'error' });
+        setToast({ message: 'Gagal: ' + errorMsg, type: 'error' });
       }
     } else {
+      // Logic untuk mode demo/lokal
       if (selectedEmployee) {
         setEmployees(prev => prev.map(e => e.id === emp.id ? emp : e));
       } else {
         setEmployees(prev => [emp, ...prev]);
       }
-      setToast({ message: 'Tersimpan di Penyimpanan Lokal', type: 'info' });
+      setToast({ message: 'Tersimpan (Mode Demo)', type: 'info' });
     }
     setTimeout(() => setToast(null), 5000);
   };
@@ -142,13 +146,13 @@ const App: React.FC = () => {
         const { error } = await supabase.from('employees').delete().eq('id', id);
         if (error) throw error;
         setEmployees(prev => prev.filter(e => e.id !== id));
-        setToast({ message: 'Berhasil dihapus dari Cloud', type: 'success' });
+        setToast({ message: 'Data dihapus dari Cloud', type: 'success' });
       } catch (err: any) {
         setToast({ message: 'Gagal hapus: ' + err.message, type: 'error' });
       }
     } else {
       setEmployees(prev => prev.filter(e => e.id !== id));
-      setToast({ message: 'Dihapus dari lokal', type: 'success' });
+      setToast({ message: 'Dihapus secara lokal', type: 'success' });
     }
     setTimeout(() => setToast(null), 3000);
   };
@@ -239,7 +243,7 @@ const App: React.FC = () => {
           </div>
           <div className="flex items-center space-x-8">
             <button onClick={fetchEmployees} className={`p-3 text-slate-400 hover:text-indigo-600 transition-all ${isLoadingData ? 'animate-spin' : ''}`}>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357-2H15"/></svg>
             </button>
             <div className="relative group">
               <span className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
