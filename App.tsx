@@ -21,14 +21,6 @@ const App: React.FC = () => {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'info' | 'error' } | null>(null);
 
-  // Filter States
-  const [selectedMonth, setSelectedMonth] = useState<number | string>('');
-  const [selectedYear, setSelectedYear] = useState<number | string>('');
-
-  const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-  const currentYear = new Date().getFullYear();
-  const yearOptions = Array.from({ length: 11 }, (_, i) => currentYear - 2 + i);
-
   useEffect(() => {
     loadInitialData();
   }, []);
@@ -37,7 +29,6 @@ const App: React.FC = () => {
     if (isSupabaseConfigured && supabase) {
       await fetchEmployees();
     } else {
-      // Jika belum setting Supabase, pakai data demo agar aplikasi tidak kosong
       setEmployees(MOCK_EMPLOYEES);
       setIsLoadingData(false);
     }
@@ -56,13 +47,11 @@ const App: React.FC = () => {
       
       if (data && data.length > 0) {
         setEmployees(data);
-      } else if (data && data.length === 0) {
-        // Jika database baru dibuat dan masih kosong, isi dengan data awal
+      } else {
         setEmployees(MOCK_EMPLOYEES);
       }
     } catch (err: any) {
-      console.error('Fetch error:', err.message);
-      setToast({ message: 'Cloud error: Menggunakan data lokal sementara.', type: 'error' });
+      setToast({ message: 'Koneksi Cloud Gagal', type: 'error' });
       setEmployees(MOCK_EMPLOYEES);
     } finally {
       setIsLoadingData(false);
@@ -76,27 +65,25 @@ const App: React.FC = () => {
           const { error } = await supabase.from('employees').update(emp).eq('id', emp.id);
           if (error) throw error;
           setEmployees(prev => prev.map(e => e.id === emp.id ? emp : e));
-          setToast({ message: `Data ${emp.nama} diperbarui di Cloud!`, type: 'success' });
+          setToast({ message: 'Data Cloud diperbarui!', type: 'success' });
         } else {
           const { error } = await supabase.from('employees').insert([emp]);
           if (error) throw error;
           setEmployees(prev => [emp, ...prev]);
-          setToast({ message: `Pegawai ${emp.nama} berhasil disimpan ke Cloud!`, type: 'success' });
+          setToast({ message: 'Tersimpan di Cloud!', type: 'success' });
         }
       } catch (err: any) {
-        setToast({ message: 'Gagal simpan ke Cloud: ' + err.message, type: 'error' });
+        setToast({ message: 'Gagal Cloud: ' + err.message, type: 'error' });
       }
     } else {
-      // Demo Mode
       if (selectedEmployee) {
         setEmployees(prev => prev.map(e => e.id === emp.id ? emp : e));
       } else {
         setEmployees(prev => [emp, ...prev]);
       }
-      setToast({ message: 'Mode Demo: Disimpan di browser ini saja.', type: 'info' });
+      setToast({ message: 'Tersimpan Lokal (Demo)', type: 'info' });
     }
     setTimeout(() => setToast(null), 3000);
-    setSelectedEmployee(null);
   };
 
   const handleDeleteEmployee = async (id: string) => {
@@ -105,13 +92,13 @@ const App: React.FC = () => {
         const { error } = await supabase.from('employees').delete().eq('id', id);
         if (error) throw error;
         setEmployees(prev => prev.filter(e => e.id !== id));
-        setToast({ message: 'Data dihapus dari sistem Cloud', type: 'success' });
+        setToast({ message: 'Dihapus dari Cloud', type: 'success' });
       } catch (err: any) {
         setToast({ message: 'Gagal hapus di Cloud.', type: 'error' });
       }
     } else {
       setEmployees(prev => prev.filter(e => e.id !== id));
-      setToast({ message: 'Data dihapus (Mode Demo)', type: 'info' });
+      setToast({ message: 'Dihapus (Lokal)', type: 'info' });
     }
     setTimeout(() => setToast(null), 3000);
   };
@@ -150,8 +137,8 @@ const App: React.FC = () => {
           <div className="w-10 h-10 bg-indigo-500 rounded-2xl flex items-center justify-center font-black text-2xl shadow-lg shadow-indigo-500/30">H</div>
           <div>
             <span className="text-xl font-black tracking-tight block">HR-Pro</span>
-            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-none">
-              {isSupabaseConfigured ? 'Sistem Terintegrasi' : 'Mode Demo'}
+            <span className={`text-[10px] font-bold uppercase tracking-widest leading-none ${isSupabaseConfigured ? 'text-emerald-400' : 'text-orange-400'}`}>
+              {isSupabaseConfigured ? 'CLOUD MODE ACTIVE' : 'MODE DEMO'}
             </span>
           </div>
         </div>
@@ -164,15 +151,15 @@ const App: React.FC = () => {
           ))}
         </nav>
         <div className="p-6">
-          <div className="bg-slate-800/50 backdrop-blur-sm rounded-3xl p-5 border border-slate-700/50 text-center">
+          <div className={`rounded-3xl p-5 border text-center transition-all ${isSupabaseConfigured ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-slate-800/50 border-slate-700/50'}`}>
              <div className="flex items-center justify-center space-x-2 mb-2">
-               <div className={`w-2 h-2 rounded-full ${isSupabaseConfigured ? 'bg-emerald-500' : 'bg-orange-500 animate-pulse'}`}></div>
-               <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+               <div className={`w-2 h-2 rounded-full ${isSupabaseConfigured ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-orange-500 animate-pulse'}`}></div>
+               <span className={`text-[9px] font-black uppercase tracking-widest ${isSupabaseConfigured ? 'text-emerald-400' : 'text-slate-400'}`}>
                  {isSupabaseConfigured ? 'Database Online' : 'Local Storage Only'}
                </span>
              </div>
              {!isSupabaseConfigured && (
-               <p className="text-[9px] text-slate-500 mt-2 font-medium leading-relaxed italic">Hapus proyek Vercel lama dan masukkan API Key untuk mengaktifkan Cloud.</p>
+               <p className="text-[9px] text-slate-500 mt-2 font-medium leading-relaxed italic">Input di Vercel: VITE_SUPABASE_URL & VITE_SUPABASE_ANON_KEY. Lalu lakukan Redeploy.</p>
              )}
           </div>
         </div>
@@ -260,7 +247,7 @@ const App: React.FC = () => {
                    <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-wrap items-center gap-6">
                     <div className="flex-1">
                       <h2 className="text-2xl font-black text-slate-900 tracking-tight">Monitoring {currentView === 'KONTROL_PANGKAT' ? 'Kenaikan Pangkat' : currentView === 'KONTROL_KGB' ? 'Kenaikan Gaji Berkala' : 'Pensiun'}</h2>
-                      <p className="text-xs text-slate-400 font-bold uppercase mt-1">Data otomatis ditarik dari Database Cloud</p>
+                      <p className="text-xs text-slate-400 font-bold uppercase mt-1">Data sinkron otomatis dengan Database Cloud</p>
                     </div>
                   </div>
                   <EmployeeTable 
