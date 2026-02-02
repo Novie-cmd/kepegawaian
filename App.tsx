@@ -78,31 +78,51 @@ const App: React.FC = () => {
   };
 
   const handleSaveEmployee = async (emp: Employee) => {
-    // Bersihkan data dari undefined untuk menghindari error Supabase
-    const cleanData = Object.fromEntries(
-      Object.entries(emp).map(([key, value]) => [key, value === undefined ? null : value])
-    );
+    // Pastikan semua field yang opsional dikonversi ke null jika undefined
+    const payload = {
+      id: emp.id,
+      nip: emp.nip || '',
+      nama: emp.nama || '',
+      jabatan: emp.jabatan || '',
+      golongan: emp.golongan,
+      tmtGolongan: emp.tmtGolongan,
+      tmtKgb: emp.tmtKgb,
+      tanggalLahir: emp.tanggalLahir,
+      tempatLahir: emp.tempatLahir || null,
+      noHp: emp.noHp || null,
+      unitKerja: emp.unitKerja || null,
+      avatar: emp.avatar || null,
+      gajiPokokLama: emp.gajiPokokLama || null,
+      nomorSkpTerakhir: emp.nomorSkpTerakhir || null,
+      tglSkpTerakhir: emp.tglSkpTerakhir || null,
+      tglMulaiGajiLama: emp.tglMulaiGajiLama || null,
+      masaKerjaGolonganLama: emp.masaKerjaGolonganLama || null,
+      gajiPokokBaru: emp.gajiPokokBaru || null,
+      masaKerjaBaru: emp.masaKerjaBaru || null,
+      golonganBaru: emp.golonganBaru || null,
+      keterangan: emp.keterangan || null
+    };
 
     if (isSupabaseConfigured && supabase) {
       try {
         if (selectedEmployee) {
-          const { error } = await supabase.from('employees').update(cleanData).eq('id', emp.id);
+          const { error } = await supabase.from('employees').update(payload).eq('id', emp.id);
           if (error) throw error;
-          setEmployees(prev => prev.map(e => e.id === emp.id ? (cleanData as Employee) : e));
+          setEmployees(prev => prev.map(e => e.id === emp.id ? (payload as Employee) : e));
           setToast({ message: 'Data Cloud diperbarui!', type: 'success' });
         } else {
-          const { error } = await supabase.from('employees').insert([cleanData]);
+          const { error } = await supabase.from('employees').insert([payload]);
           if (error) throw error;
-          setEmployees(prev => [cleanData as Employee, ...prev]);
+          setEmployees(prev => [payload as Employee, ...prev]);
           setToast({ message: 'Tersimpan di Cloud!', type: 'success' });
         }
       } catch (err: any) {
-        console.error("Supabase Save Error:", err);
+        console.error("Supabase Save Error Details:", err);
         let msg = err.message;
         if (msg.includes('column') || msg.includes('find')) {
-          msg = "Kolom database tidak cocok. Harap jalankan SQL Fix di Supabase Dashboard.";
+          msg = "Struktur database belum siap. Silakan jalankan SQL Fix di Supabase Dashboard.";
         }
-        setToast({ message: 'Gagal: ' + msg, type: 'error' });
+        setToast({ message: 'Error: ' + msg, type: 'error' });
       }
     } else {
       if (selectedEmployee) {
@@ -110,26 +130,25 @@ const App: React.FC = () => {
       } else {
         setEmployees(prev => [emp, ...prev]);
       }
-      setToast({ message: 'Tersimpan Lokal (Demo)', type: 'info' });
+      setToast({ message: 'Tersimpan di Penyimpanan Lokal', type: 'info' });
     }
-    setTimeout(() => setToast(null), 4000);
+    setTimeout(() => setToast(null), 5000);
   };
 
   const handleDeleteEmployee = async (id: string) => {
-    setToast({ message: 'Sedang menghapus...', type: 'info' });
-    
+    setToast({ message: 'Menghapus data...', type: 'info' });
     if (isSupabaseConfigured && supabase) {
       try {
         const { error } = await supabase.from('employees').delete().eq('id', id);
         if (error) throw error;
         setEmployees(prev => prev.filter(e => e.id !== id));
-        setToast({ message: 'Data berhasil dihapus dari Cloud', type: 'success' });
+        setToast({ message: 'Berhasil dihapus dari Cloud', type: 'success' });
       } catch (err: any) {
-        setToast({ message: 'Gagal menghapus: ' + (err.message || 'Cek RLS Policy'), type: 'error' });
+        setToast({ message: 'Gagal hapus: ' + err.message, type: 'error' });
       }
     } else {
       setEmployees(prev => prev.filter(e => e.id !== id));
-      setToast({ message: 'Dihapus dari penyimpanan lokal', type: 'success' });
+      setToast({ message: 'Dihapus dari lokal', type: 'success' });
     }
     setTimeout(() => setToast(null), 3000);
   };
@@ -315,4 +334,20 @@ const App: React.FC = () => {
                     </button>
                     {aiReport && (
                       <div className="text-left bg-slate-50 p-10 rounded-[2.5rem] border border-slate-100 animate-fadeIn whitespace-pre-wrap font-medium leading-relaxed text-slate-700 shadow-inner">
-                        {aiReport
+                        {aiReport}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </main>
+
+      <EmployeeModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setSelectedEmployee(null); }} onSave={handleSaveEmployee} initialData={selectedEmployee} onDelete={handleDeleteEmployee} />
+    </div>
+  );
+};
+
+export default App;
