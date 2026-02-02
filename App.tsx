@@ -29,12 +29,10 @@ const App: React.FC = () => {
   const yearOptions = Array.from({ length: 11 }, (_, i) => currentYear - 2 + i);
   const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
-  // Fetch data from Supabase only if configured
   useEffect(() => {
     if (isSupabaseConfigured) {
       fetchEmployees();
     } else {
-      // Fallback to local data or empty if not configured to prevent crash
       setEmployees([]);
       setIsLoadingData(false);
     }
@@ -58,33 +56,6 @@ const App: React.FC = () => {
       setIsLoadingData(false);
     }
   };
-
-  // Rendering Helper for Configuration Error
-  if (!isSupabaseConfigured) {
-    return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 text-white font-sans">
-        <div className="max-w-2xl w-full bg-slate-800 rounded-[3rem] p-12 shadow-2xl border border-slate-700 animate-fadeIn text-center">
-          <div className="w-24 h-24 bg-indigo-600 rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-xl shadow-indigo-500/20">
-            <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 15v2m0 0v2m0-2h2m-2 0H10m4-6a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
-          </div>
-          <h1 className="text-3xl font-black mb-4 tracking-tight">Konfigurasi Cloud Diperlukan</h1>
-          <p className="text-slate-400 mb-10 leading-relaxed font-medium">
-            Aplikasi tidak dapat tampil karena variabel database Supabase belum diatur di panel kontrol Vercel Anda.
-          </p>
-          <div className="bg-slate-900/50 rounded-2xl p-6 mb-10 text-left border border-slate-700">
-            <h2 className="text-xs font-black uppercase tracking-widest text-indigo-400 mb-4">Langkah Perbaikan:</h2>
-            <ol className="text-sm space-y-3 text-slate-300">
-              <li className="flex items-start"><span className="bg-indigo-600 text-[10px] w-5 h-5 rounded-full flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">1</span> Buka Dashboard Vercel Proyek Anda</li>
-              <li className="flex items-start"><span className="bg-indigo-600 text-[10px] w-5 h-5 rounded-full flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">2</span> Masuk ke menu <b className="text-white">Settings → Environment Variables</b></li>
-              <li className="flex items-start"><span className="bg-indigo-600 text-[10px] w-5 h-5 rounded-full flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">3</span> Tambahkan <code className="text-indigo-300">SUPABASE_URL</code> dan <code className="text-indigo-300">SUPABASE_ANON_KEY</code></li>
-              <li className="flex items-start"><span className="bg-indigo-600 text-[10px] w-5 h-5 rounded-full flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">4</span> Lakukan <b className="text-white">Redeploy</b> di Vercel</li>
-            </ol>
-          </div>
-          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">DPM-PTSP NTB • HR Analytics System</p>
-        </div>
-      </div>
-    );
-  }
 
   const handleSaveEmployee = async (emp: Employee) => {
     if (!supabase) return;
@@ -120,23 +91,11 @@ const App: React.FC = () => {
     setTimeout(() => setToast(null), 4000);
   };
 
-  const handleClearDatabase = async () => {
-    if (!supabase) return;
-    if (window.confirm('Hapus seluruh database cloud?')) {
-      const confirmation = window.prompt('Ketik "HAPUS":');
-      if (confirmation === 'HAPUS') {
-        try {
-          const ids = employees.map(e => e.id);
-          const { error } = await supabase.from('employees').delete().in('id', ids);
-          if (error) throw error;
-          setEmployees([]);
-          setToast({ message: 'Database cloud dikosongkan.', type: 'error' });
-        } catch (err) {
-          setToast({ message: 'Gagal membersihkan database.', type: 'error' });
-        }
-        setTimeout(() => setToast(null), 4000);
-      }
-    }
+  const generateAiReport = async () => {
+    setIsLoadingAi(true);
+    const report = await getAIAnalysis(employees);
+    setAiReport(report);
+    setIsLoadingAi(false);
   };
 
   const pangkatEligible = useMemo(() => {
@@ -180,6 +139,32 @@ const App: React.FC = () => {
   }, [employees]);
 
   const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+
+  if (!isSupabaseConfigured) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 text-white font-sans">
+        <div className="max-w-2xl w-full bg-slate-800 rounded-[3rem] p-12 shadow-2xl border border-slate-700 animate-fadeIn text-center">
+          <div className="w-24 h-24 bg-indigo-600 rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-xl shadow-indigo-500/20">
+            <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 15v2m0 0v2m0-2h2m-2 0H10m4-6a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+          </div>
+          <h1 className="text-3xl font-black mb-4 tracking-tight">Konfigurasi Cloud Diperlukan</h1>
+          <p className="text-slate-400 mb-10 leading-relaxed font-medium">
+            Aplikasi tidak dapat tampil karena variabel database Supabase belum diatur di panel kontrol Vercel Anda.
+          </p>
+          <div className="bg-slate-900/50 rounded-2xl p-6 mb-10 text-left border border-slate-700">
+            <h2 className="text-xs font-black uppercase tracking-widest text-indigo-400 mb-4">Langkah Perbaikan:</h2>
+            <ol className="text-sm space-y-3 text-slate-300">
+              <li className="flex items-start"><span className="bg-indigo-600 text-[10px] w-5 h-5 rounded-full flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">1</span> Buka Dashboard Vercel Proyek Anda</li>
+              <li className="flex items-start"><span className="bg-indigo-600 text-[10px] w-5 h-5 rounded-full flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">2</span> Masuk ke menu <b className="text-white">Settings → Environment Variables</b></li>
+              <li className="flex items-start"><span className="bg-indigo-600 text-[10px] w-5 h-5 rounded-full flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">3</span> Tambahkan <code className="text-indigo-300">SUPABASE_URL</code> dan <code className="text-indigo-300">SUPABASE_ANON_KEY</code></li>
+              <li className="flex items-start"><span className="bg-indigo-600 text-[10px] w-5 h-5 rounded-full flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">4</span> Lakukan <b className="text-white">Redeploy</b> di Vercel</li>
+            </ol>
+          </div>
+          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">DPM-PTSP NTB • HR Analytics System</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden font-sans">
@@ -242,7 +227,7 @@ const App: React.FC = () => {
           {isLoadingData ? (
             <div className="h-full flex flex-col items-center justify-center space-y-4">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-              <p className="font-black text-slate-400 uppercase tracking-widest text-xs">Menghubungkan ke Cloud Database...</p>
+              <p className="font-black text-slate-400 uppercase tracking-widest text-xs">Menyinkronkan Database...</p>
             </div>
           ) : (
             <div className="space-y-12 animate-fadeIn">
@@ -253,7 +238,7 @@ const App: React.FC = () => {
                   </div>
                   <div className="grid grid-cols-1 xl:grid-cols-3 gap-12">
                     <div className="xl:col-span-2 bg-white p-10 rounded-[3rem] shadow-xl shadow-slate-200/40 border border-white">
-                      <h3 className="text-2xl font-black text-slate-800 tracking-tight mb-10">Statistik Golongan</h3>
+                      <h3 className="text-2xl font-black text-slate-800 tracking-tight mb-10">Distribusi Golongan</h3>
                       <div className="h-80">
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart data={chartData}>
@@ -271,19 +256,69 @@ const App: React.FC = () => {
                   </div>
                 </>
               )}
+
               {currentView === 'DATA_PEGAWAI' && (
-                <div className="space-y-10 animate-fadeIn">
-                  <div className="flex justify-between items-end">
-                    <h2 className="text-4xl font-black text-slate-900 tracking-tight">Database Pegawai Cloud</h2>
-                    <div className="flex space-x-4">
-                      <button onClick={handleClearDatabase} className="bg-rose-50 text-rose-600 px-8 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest hover:bg-rose-600 hover:text-white transition-all border border-rose-100">Kosongkan Database</button>
-                      <button onClick={() => { setSelectedEmployee(null); setIsModalOpen(true); }} className="bg-indigo-600 text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest shadow-2xl shadow-indigo-600/30 hover:bg-indigo-700 transition-all flex items-center space-x-4">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                        <span>Tambah Pegawai</span>
-                      </button>
-                    </div>
+                <div className="space-y-10">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-4xl font-black text-slate-900 tracking-tight">Master Data Pegawai</h2>
+                    <button onClick={() => { setSelectedEmployee(null); setIsModalOpen(true); }} className="bg-indigo-600 text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest shadow-2xl shadow-indigo-600/30 hover:bg-indigo-700 transition-all flex items-center space-x-4">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                      <span>Tambah Pegawai</span>
+                    </button>
                   </div>
                   <EmployeeTable employees={filteredEmployees} onAction={(e) => { setSelectedEmployee(e); setIsModalOpen(true); }} onDelete={handleDeleteEmployee} type="NORMAL" />
+                </div>
+              )}
+
+              {(currentView === 'KONTROL_PANGKAT' || currentView === 'KONTROL_KGB' || currentView === 'KONTROL_PENSIUN') && (
+                <div className="space-y-10">
+                  <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-wrap items-center gap-6">
+                    <div className="flex-1">
+                      <h2 className="text-2xl font-black text-slate-900 tracking-tight">Monitoring {currentView === 'KONTROL_PANGKAT' ? 'Kenaikan Pangkat' : currentView === 'KONTROL_KGB' ? 'Kenaikan Gaji Berkala' : 'Pensiun'}</h2>
+                      <p className="text-xs text-slate-400 font-bold uppercase mt-1">Data otomatis berdasarkan TMT dan Tanggal Lahir</p>
+                    </div>
+                    {currentView !== 'KONTROL_PENSIUN' && (
+                      <div className="flex items-center space-x-4">
+                        <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="px-5 py-3 bg-gray-50 border border-slate-100 rounded-xl font-bold text-xs text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500/10">
+                          <option value="">Semua Bulan</option>
+                          {monthNames.map((m, i) => <option key={i} value={i}>{m}</option>)}
+                        </select>
+                        <select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)} className="px-5 py-3 bg-gray-50 border border-slate-100 rounded-xl font-bold text-xs text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500/10">
+                          <option value="">Semua Tahun</option>
+                          {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+                  <EmployeeTable 
+                    employees={currentView === 'KONTROL_PANGKAT' ? pangkatEligible : currentView === 'KONTROL_KGB' ? kgbEligible : retirementEligible} 
+                    onAction={(e) => { setSelectedEmployee(e); setIsModalOpen(true); }} 
+                    onDelete={handleDeleteEmployee}
+                    type={currentView === 'KONTROL_PANGKAT' ? 'PANGKAT' : currentView === 'KONTROL_KGB' ? 'KGB' : 'PENSIUN'} 
+                  />
+                </div>
+              )}
+
+              {currentView === 'AI_REPORT' && (
+                <div className="space-y-10 max-w-4xl mx-auto">
+                  <div className="bg-white p-12 rounded-[3rem] shadow-2xl border border-indigo-50 text-center space-y-8">
+                    <div className="w-20 h-20 bg-indigo-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-xl shadow-indigo-200">
+                      <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                    </div>
+                    <div className="space-y-4">
+                      <h2 className="text-3xl font-black text-slate-900 tracking-tight">Analisis Data Strategis AI</h2>
+                      <p className="text-slate-500 font-medium">Gemini AI akan menganalisis profil pegawai Anda untuk memberikan saran regenerasi dan perencanaan SDM.</p>
+                    </div>
+                    <button onClick={generateAiReport} disabled={isLoadingAi} className="bg-indigo-600 text-white px-12 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-200 hover:bg-indigo-700 transition-all flex items-center space-x-4 mx-auto disabled:opacity-50">
+                      {isLoadingAi ? <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>}
+                      <span>{isLoadingAi ? 'Sedang Menganalisis...' : 'Mulai Analisis Sekarang'}</span>
+                    </button>
+                    {aiReport && (
+                      <div className="text-left bg-slate-50 p-10 rounded-[2.5rem] border border-slate-100 animate-fadeIn whitespace-pre-wrap font-medium leading-relaxed text-slate-700 shadow-inner">
+                        {aiReport}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -291,7 +326,7 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      <EmployeeModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setSelectedEmployee(null); }} onSave={handleSaveEmployee} initialData={selectedEmployee} />
+      <EmployeeModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setSelectedEmployee(null); }} onSave={handleSaveEmployee} initialData={selectedEmployee} onDelete={handleDeleteEmployee} />
     </div>
   );
 };
