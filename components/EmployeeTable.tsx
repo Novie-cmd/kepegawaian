@@ -12,8 +12,8 @@ interface EmployeeTableProps {
 
 const EmployeeTable: React.FC<EmployeeTableProps> = ({ employees, type = 'NORMAL', onAction, onDelete }) => {
   const handleDelete = (e: React.MouseEvent, emp: Employee) => {
-    e.stopPropagation(); // Mencegah bubbling jika ada aksi baris
-    if (window.confirm(`Apakah Anda yakin ingin menghapus data pegawai "${emp.nama}" secara permanen dari sistem?`)) {
+    e.stopPropagation();
+    if (window.confirm(`PERINGATAN: Apakah Anda yakin ingin menghapus data "${emp.nama}" secara permanen? Tindakan ini tidak dapat dibatalkan.`)) {
       if (onDelete) {
         onDelete(emp.id);
       }
@@ -101,7 +101,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({ employees, type = 'NORMAL
                   
                   <button 
                     onClick={(e) => handleDelete(e, emp)}
-                    className="p-2.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all duration-300 border border-transparent hover:border-rose-100"
+                    className="p-2.5 text-slate-300 hover:text-rose-500 hover:bg-rose-500 hover:text-white rounded-xl transition-all duration-300 border border-slate-100 hover:border-rose-500 group-hover:bg-rose-50 group-hover:text-rose-400"
                     title="Hapus Pegawai"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>

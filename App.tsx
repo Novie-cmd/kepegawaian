@@ -23,7 +23,6 @@ const App: React.FC = () => {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'info' | 'error' } | null>(null);
 
-  // Cek apakah sudah pernah login sebelumnya di sesi ini
   useEffect(() => {
     const session = sessionStorage.getItem('hr_pro_auth');
     if (session === 'true') {
@@ -68,14 +67,10 @@ const App: React.FC = () => {
         .order('nama', { ascending: true });
 
       if (error) throw error;
-      
-      if (data && data.length > 0) {
-        setEmployees(data);
-      } else {
-        setEmployees(MOCK_EMPLOYEES);
-      }
+      setEmployees(data || []);
     } catch (err: any) {
-      setToast({ message: 'Koneksi Cloud Gagal', type: 'error' });
+      console.error("Fetch error:", err);
+      setToast({ message: 'Gagal memuat data cloud', type: 'error' });
       setEmployees(MOCK_EMPLOYEES);
     } finally {
       setIsLoadingData(false);
@@ -97,7 +92,7 @@ const App: React.FC = () => {
           setToast({ message: 'Tersimpan di Cloud!', type: 'success' });
         }
       } catch (err: any) {
-        setToast({ message: 'Gagal Cloud: ' + err.message, type: 'error' });
+        setToast({ message: 'Gagal simpan: ' + err.message, type: 'error' });
       }
     } else {
       if (selectedEmployee) {
@@ -111,19 +106,29 @@ const App: React.FC = () => {
   };
 
   const handleDeleteEmployee = async (id: string) => {
+    setToast({ message: 'Sedang menghapus...', type: 'info' });
+    
     if (isSupabaseConfigured && supabase) {
       try {
         const { error } = await supabase.from('employees').delete().eq('id', id);
-        if (error) throw error;
+        
+        if (error) {
+          console.error("Supabase Delete Error:", error);
+          throw error;
+        }
+
+        // Update state lokal setelah berhasil di Cloud
         setEmployees(prev => prev.filter(e => e.id !== id));
-        setToast({ message: 'Dihapus dari Cloud', type: 'success' });
+        setToast({ message: 'Data berhasil dihapus dari Cloud', type: 'success' });
       } catch (err: any) {
-        setToast({ message: 'Gagal hapus di Cloud.', type: 'error' });
+        setToast({ message: 'Gagal menghapus: ' + (err.message || 'Cek RLS Policy'), type: 'error' });
       }
     } else {
+      // Mode Lokal
       setEmployees(prev => prev.filter(e => e.id !== id));
-      setToast({ message: 'Dihapus (Lokal)', type: 'info' });
+      setToast({ message: 'Dihapus dari penyimpanan lokal', type: 'success' });
     }
+    
     setTimeout(() => setToast(null), 3000);
   };
 
