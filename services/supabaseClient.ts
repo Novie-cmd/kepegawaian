@@ -1,26 +1,29 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// Fungsi bantuan untuk mengambil env dengan aman di browser tanpa crash
+// Fungsi helper untuk mengambil environment variable di berbagai platform (Vercel/Local)
 const getEnv = (name: string): string | undefined => {
-  try {
-    // Mengecek apakah window.process ada sebelum mengakses
-    if (typeof window !== 'undefined' && (window as any).process?.env) {
-      return (window as any).process.env[name];
-    }
-    // Fallback ke process.env standar (untuk environment bundler)
+  // Cek di process.env (Vercel Server-side/Build-time)
+  if (typeof process !== 'undefined' && process.env && process.env[name]) {
     return process.env[name];
-  } catch {
-    return undefined;
   }
+  // Cek di import.meta.env (Vite/Modern Bundlers)
+  if (typeof (import.meta as any).env !== 'undefined' && (import.meta as any).env[`VITE_${name}`]) {
+    return (import.meta as any).env[`VITE_${name}`];
+  }
+  // Cek di window.process (Shim untuk browser)
+  if (typeof window !== 'undefined' && (window as any).process?.env?.[name]) {
+    return (window as any).process.env[name];
+  }
+  return undefined;
 };
 
 const supabaseUrl = getEnv('SUPABASE_URL');
 const supabaseAnonKey = getEnv('SUPABASE_ANON_KEY');
 
-export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey);
+// Aplikasi hanya akan masuk ke mode "Cloud" jika kedua kunci ini valid
+export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey && supabaseUrl.startsWith('https://'));
 
-// Inisialisasi client dengan penanganan null
 export const supabase = isSupabaseConfigured 
   ? createClient(supabaseUrl!, supabaseAnonKey!) 
   : null;
