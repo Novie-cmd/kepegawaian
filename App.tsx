@@ -5,12 +5,14 @@ import { NAV_ITEMS, MOCK_EMPLOYEES } from './constants';
 import StatCard from './components/StatCard';
 import EmployeeTable from './components/EmployeeTable';
 import EmployeeModal from './components/EmployeeModal';
+import LoginView from './components/LoginView';
 import { getNextPromotion, getNextKgb, getRetirementDate, isNear } from './utils/dateUtils';
 import { getAIAnalysis } from './services/geminiService';
 import { supabase, isSupabaseConfigured } from './services/supabaseClient';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 const App: React.FC = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [currentView, setCurrentView] = useState<ViewType>('DASHBOARD');
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
@@ -21,9 +23,31 @@ const App: React.FC = () => {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'info' | 'error' } | null>(null);
 
+  // Cek apakah sudah pernah login sebelumnya di sesi ini
   useEffect(() => {
-    loadInitialData();
+    const session = sessionStorage.getItem('hr_pro_auth');
+    if (session === 'true') {
+      setIsAuthenticated(true);
+    }
   }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadInitialData();
+    }
+  }, [isAuthenticated]);
+
+  const handleLogin = (status: boolean) => {
+    if (status) {
+      setIsAuthenticated(true);
+      sessionStorage.setItem('hr_pro_auth', 'true');
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    sessionStorage.removeItem('hr_pro_auth');
+  };
 
   const loadInitialData = async () => {
     if (isSupabaseConfigured && supabase) {
@@ -130,6 +154,10 @@ const App: React.FC = () => {
     return Object.entries(groups).map(([name, value]) => ({ name, value }));
   }, [employees]);
 
+  if (!isAuthenticated) {
+    return <LoginView onLogin={handleLogin} />;
+  }
+
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden font-sans text-slate-900">
       <aside className="w-72 bg-slate-900 text-white flex flex-col hidden lg:flex shadow-2xl relative z-20">
@@ -150,7 +178,7 @@ const App: React.FC = () => {
             </button>
           ))}
         </nav>
-        <div className="p-6">
+        <div className="p-6 space-y-4">
           <div className={`rounded-3xl p-5 border text-center transition-all ${isSupabaseConfigured ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-slate-800/50 border-slate-700/50'}`}>
              <div className="flex items-center justify-center space-x-2 mb-2">
                <div className={`w-2 h-2 rounded-full ${isSupabaseConfigured ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-orange-500 animate-pulse'}`}></div>
@@ -158,10 +186,11 @@ const App: React.FC = () => {
                  {isSupabaseConfigured ? 'Database Online' : 'Local Storage Only'}
                </span>
              </div>
-             {!isSupabaseConfigured && (
-               <p className="text-[9px] text-slate-500 mt-2 font-medium leading-relaxed italic">Input di Vercel: VITE_SUPABASE_URL & VITE_SUPABASE_ANON_KEY. Lalu lakukan Redeploy.</p>
-             )}
           </div>
+          <button onClick={handleLogout} className="w-full flex items-center justify-center space-x-3 px-5 py-4 rounded-2xl text-slate-400 hover:bg-rose-500/10 hover:text-rose-500 transition-all font-bold text-xs uppercase tracking-widest border border-transparent hover:border-rose-500/20">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+            <span>Logout</span>
+          </button>
         </div>
       </aside>
 

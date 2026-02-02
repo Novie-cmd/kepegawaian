@@ -2,9 +2,27 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Employee, Golongan } from "../types";
 
-// Inisialisasi dilakukan di dalam fungsi untuk memastikan mendapatkan API_KEY terbaru dari process.env
+// Fungsi pencarian kunci yang sama dengan database
+const getApiKey = (): string => {
+  const searchKeys = ['API_KEY', 'VITE_API_KEY', 'NEXT_PUBLIC_API_KEY'];
+  
+  for (const key of searchKeys) {
+    try {
+      const metaEnv = (import.meta as any).env;
+      if (metaEnv && metaEnv[key]) return metaEnv[key];
+    } catch (e) {}
+    
+    try {
+      if (typeof process !== 'undefined' && process.env && process.env[key]) {
+        return process.env[key];
+      }
+    } catch (e) {}
+  }
+  return '';
+};
+
 const getAiClient = () => {
-  const apiKey = process.env.API_KEY || '';
+  const apiKey = getApiKey();
   return new GoogleGenAI({ apiKey });
 };
 
@@ -44,26 +62,8 @@ export const extractEmployeeDataFromImage = async (base64Image: string): Promise
   try {
     const ai = getAiClient();
     const prompt = `
-      Extract employee information from this document (Kenaikan Gaji Berkala / SK).
-      Return ONLY a JSON object with the following fields:
-      - nama: string
-      - nip: string (digits only)
-      - jabatan: string
-      - golongan: string (e.g., III/d)
-      - tanggalLahir: string (YYYY-MM-DD)
-      - unitKerja: string
-      - tmtKgb: string (The 'Mulai Tanggal' field for the NEW salary, YYYY-MM-DD)
-      - gajiPokokLama: string (Item 5 in document)
-      - nomorSkpTerakhir: string (Item c under Atas dasar SKP Terakhir)
-      - tglSkpTerakhir: string (Item b under Atas dasar SKP Terakhir, YYYY-MM-DD)
-      - tglMulaiGajiLama: string (Item d under Atas dasar SKP Terakhir, YYYY-MM-DD)
-      - masaKerjaGolonganLama: string (Item e under Atas dasar SKP Terakhir)
-      - gajiPokokBaru: string (Item 6)
-      - masaKerjaBaru: string (Item 7)
-      - golonganBaru: string (Item 8)
-      - keterangan: string (Item 10)
-      
-      Ensure all dates are converted to YYYY-MM-DD format.
+      Extract employee information from this document.
+      Return ONLY a JSON object.
     `;
 
     const response = await ai.models.generateContent({
