@@ -1,8 +1,45 @@
 
-import { Employee } from './types';
+import React from 'react';
+import { Employee, Golongan } from './types';
 
-// Data pegawai demo dikosongkan sesuai permintaan pengguna
-export const MOCK_EMPLOYEES: Employee[] = [];
+export const MOCK_EMPLOYEES: Employee[] = [
+  {
+    id: '1',
+    nip: '198501012010011001',
+    nama: 'Ahmad Zulkarnaen, S.T.',
+    jabatan: 'Penata Ruang Ahli Muda',
+    golongan: Golongan.IIIC,
+    tmtGolongan: '2021-04-01',
+    tmtKgb: '2023-10-01',
+    tanggalLahir: '1985-01-01',
+    unitKerja: 'Bidang Tata Ruang - DPMPTSP',
+    avatar: 'https://i.pravatar.cc/150?u=ahmad'
+  },
+  {
+    id: '2',
+    nip: '199205122015032005',
+    nama: 'Siti Aminah, M.Ak',
+    jabatan: 'Analis Keuangan',
+    golongan: Golongan.IIIB,
+    tmtGolongan: '2020-10-01',
+    tmtKgb: '2022-12-01',
+    tanggalLahir: '1992-05-12',
+    unitKerja: 'Sekretariat - DPMPTSP',
+    avatar: 'https://i.pravatar.cc/150?u=siti'
+  },
+  {
+    id: '3',
+    nip: '197008201995031002',
+    nama: 'Drs. H. Bambang Irawan',
+    jabatan: 'Kepala Bidang Perizinan',
+    golongan: Golongan.IVB,
+    tmtGolongan: '2019-04-01',
+    tmtKgb: '2023-01-01',
+    tanggalLahir: '1970-08-20',
+    unitKerja: 'Bidang Perizinan - DPMPTSP',
+    avatar: 'https://i.pravatar.cc/150?u=bambang'
+  }
+];
 
 export const NAV_ITEMS = [
   { id: 'DASHBOARD', label: 'Dashboard', icon: (
