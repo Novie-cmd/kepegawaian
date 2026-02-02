@@ -1,0 +1,82 @@
+
+import { GoogleGenAI, Type } from "@google/genai";
+import { Employee, Golongan } from "../types";
+
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+
+export const getAIAnalysis = async (employees: Employee[]) => {
+  try {
+    const prompt = `
+      Anda adalah pakar HR Analytics. Berdasarkan data pegawai berikut, berikan analisis ringkas:
+      1. Ringkasan jumlah pegawai dan profil golongan.
+      2. Berikan saran strategis untuk perencanaan kenaikan pangkat dan pensiun (regenerasi).
+      3. Identifikasi jika ada pegawai yang sudah mendekati masa pensiun (asumsi 58 tahun).
+      
+      Data Pegawai:
+      ${JSON.stringify(employees.map(e => ({
+        nama: e.nama,
+        golongan: e.golongan,
+        tmtGolongan: e.tmtGolongan,
+        tanggalLahir: e.tanggalLahir
+      })))}
+      
+      Gunakan Bahasa Indonesia yang formal dan berikan poin-poin penting.
+    `;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: prompt,
+    });
+
+    return response.text;
+  } catch (error) {
+    console.error("AI Analysis Error:", error);
+    return "Maaf, terjadi kesalahan saat melakukan analisis AI.";
+  }
+};
+
+export const extractEmployeeDataFromImage = async (base64Image: string): Promise<Partial<Employee> | null> => {
+  try {
+    const prompt = `
+      Extract employee information from this document (Kenaikan Gaji Berkala / SK).
+      Return ONLY a JSON object with the following fields:
+      - nama: string
+      - nip: string (digits only)
+      - jabatan: string
+      - golongan: string (e.g., III/d)
+      - tanggalLahir: string (YYYY-MM-DD)
+      - unitKerja: string
+      - tmtKgb: string (The 'Mulai Tanggal' field for the NEW salary, YYYY-MM-DD)
+      - gajiPokokLama: string (Item 5 in document)
+      - nomorSkpTerakhir: string (Item c under Atas dasar SKP Terakhir)
+      - tglSkpTerakhir: string (Item b under Atas dasar SKP Terakhir, YYYY-MM-DD)
+      - tglMulaiGajiLama: string (Item d under Atas dasar SKP Terakhir, YYYY-MM-DD)
+      - masaKerjaGolonganLama: string (Item e under Atas dasar SKP Terakhir)
+      - gajiPokokBaru: string (Item 6)
+      - masaKerjaBaru: string (Item 7)
+      - golonganBaru: string (Item 8)
+      - keterangan: string (Item 10)
+      
+      Ensure all dates are converted to YYYY-MM-DD format.
+    `;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: [
+        { text: prompt },
+        { inlineData: { mimeType: "image/jpeg", data: base64Image } }
+      ],
+      config: {
+        responseMimeType: "application/json"
+      }
+    });
+
+    const text = response.text;
+    if (!text) return null;
+    
+    return JSON.parse(text) as Partial<Employee>;
+  } catch (error) {
+    console.error("AI Extraction Error:", error);
+    return null;
+  }
+};
