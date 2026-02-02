@@ -2,10 +2,15 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Employee, Golongan } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+// Inisialisasi dilakukan di dalam fungsi untuk memastikan mendapatkan API_KEY terbaru dari process.env
+const getAiClient = () => {
+  const apiKey = process.env.API_KEY || '';
+  return new GoogleGenAI({ apiKey });
+};
 
 export const getAIAnalysis = async (employees: Employee[]) => {
   try {
+    const ai = getAiClient();
     const prompt = `
       Anda adalah pakar HR Analytics. Berdasarkan data pegawai berikut, berikan analisis ringkas:
       1. Ringkasan jumlah pegawai dan profil golongan.
@@ -31,12 +36,13 @@ export const getAIAnalysis = async (employees: Employee[]) => {
     return response.text;
   } catch (error) {
     console.error("AI Analysis Error:", error);
-    return "Maaf, terjadi kesalahan saat melakukan analisis AI.";
+    return "Maaf, terjadi kesalahan saat melakukan analisis AI. Pastikan API_KEY sudah diatur di Environment Variables.";
   }
 };
 
 export const extractEmployeeDataFromImage = async (base64Image: string): Promise<Partial<Employee> | null> => {
   try {
+    const ai = getAiClient();
     const prompt = `
       Extract employee information from this document (Kenaikan Gaji Berkala / SK).
       Return ONLY a JSON object with the following fields:

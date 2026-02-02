@@ -1,5 +1,7 @@
 {
   "name": "Sistem Kontrol & Data Pegawai",
   "description": "Aplikasi manajemen SDM canggih untuk mengelola data pegawai, kontrol kenaikan pangkat, kenaikan gaji berkala (KGB), dan monitoring pensiun dengan dukungan AI Gemini.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "camera"
+  ]
 }

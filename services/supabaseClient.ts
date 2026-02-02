@@ -1,8 +1,21 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// Pastikan Anda telah mengatur variabel lingkungan ini di platform deployment Anda
-const supabaseUrl = process.env.SUPABASE_URL || '';
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
+// Fungsi bantuan untuk mengambil env dengan aman di browser
+const getEnv = (name: string): string | undefined => {
+  try {
+    return process.env[name];
+  } catch {
+    return undefined;
+  }
+};
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabaseUrl = getEnv('SUPABASE_URL');
+const supabaseAnonKey = getEnv('SUPABASE_ANON_KEY');
+
+export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey);
+
+// Hanya buat client jika parameter tersedia untuk mencegah "Uncaught Error: supabaseUrl is required"
+export const supabase = isSupabaseConfigured 
+  ? createClient(supabaseUrl!, supabaseAnonKey!) 
+  : null;
