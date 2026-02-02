@@ -13,126 +13,12 @@ interface EmployeeModalProps {
   initialData?: Employee | null;
 }
 
-const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, onDelete, initialData }) => {
-  const [activeTab, setActiveTab] = useState<'DATA_PEGAWAI' | 'SKP_LAMA' | 'SKP_BARU'>('DATA_PEGAWAI');
-  const [isScanning, setIsScanning] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
-  
-  const [formData, setFormData] = useState<Partial<Employee>>({
-    nama: '',
-    nip: '',
-    golongan: Golongan.IIIA,
-    jabatan: '',
-    tempatLahir: '',
-    tanggalLahir: '',
-    noHp: '',
-    // SKP Lama
-    gajiPokokLama: '',
-    nomorSkpTerakhir: '',
-    tglSkpTerakhir: '',
-    tglMulaiGajiLama: '',
-    masaKerjaGolonganLama: '',
-    // SKP Baru
-    gajiPokokBaru: '',
-    masaKerjaBaru: '',
-    golonganBaru: '',
-    keterangan: '',
-    unitKerja: 'DINAS PENANAMAN MODAL DAN PTSP PROV. NTB',
-  });
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (initialData) {
-      setFormData({ ...initialData });
-    } else {
-      setFormData({
-        nama: '',
-        nip: '',
-        golongan: Golongan.IIIA,
-        jabatan: '',
-        tempatLahir: '',
-        tanggalLahir: '',
-        noHp: '',
-        gajiPokokLama: '',
-        nomorSkpTerakhir: '',
-        tglSkpTerakhir: '',
-        tglMulaiGajiLama: '',
-        masaKerjaGolonganLama: '',
-        gajiPokokBaru: '',
-        masaKerjaBaru: '',
-        golonganBaru: '',
-        keterangan: '',
-        unitKerja: 'DINAS PENANAMAN MODAL DAN PTSP PROV. NTB',
-      });
-    }
-    setActiveTab('DATA_PEGAWAI');
-    setShowPreview(false);
-  }, [initialData, isOpen]);
-
-  if (!isOpen) return null;
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    
-    // Auto formatting for Salary fields
-    if (name === 'gajiPokokLama' || name === 'gajiPokokBaru') {
-      const formattedValue = formatRupiah(value);
-      setFormData(prev => ({ ...prev, [name]: formattedValue }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
-    }
-  };
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsScanning(true);
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const base64String = (reader.result as string).split(',')[1];
-      const extractedData = await extractEmployeeDataFromImage(base64String);
-      if (extractedData) {
-        // Ensure extracted salaries are formatted
-        const formattedExtracted = { ...extractedData };
-        if (formattedExtracted.gajiPokokLama) formattedExtracted.gajiPokokLama = formatRupiah(formattedExtracted.gajiPokokLama);
-        if (formattedExtracted.gajiPokokBaru) formattedExtracted.gajiPokokBaru = formatRupiah(formattedExtracted.gajiPokokBaru);
-        
-        setFormData(prev => ({ ...prev, ...formattedExtracted }));
-      }
-      setIsScanning(false);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const employee: Employee = {
-      ...(formData as Employee),
-      id: initialData?.id || Math.random().toString(36).substr(2, 9),
-      tmtGolongan: formData.tmtGolongan || new Date().toISOString().split('T')[0],
-      tmtKgb: formData.tmtKgb || new Date().toISOString().split('T')[0],
-      avatar: initialData?.avatar || `https://picsum.photos/seed/${formData.nama}/200`
-    };
-    onSave(employee);
-    onClose();
-  };
-
-  const handleDelete = () => {
-    if (initialData && onDelete) {
-      if (window.confirm(`Apakah Anda yakin ingin menghapus data pegawai "${initialData.nama}" secara permanen?`)) {
-        onDelete(initialData.id);
-        onClose();
-      }
-    }
-  };
-
+const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (show: boolean) => void }> = ({ formData, setShowPreview }) => {
   const handlePrint = () => {
     window.print();
   };
 
-  const LetterPreview = () => (
+  return (
     <div className="absolute inset-0 z-50 bg-slate-900/40 p-0 md:p-8 overflow-y-auto animate-fadeIn backdrop-blur-md print:bg-white print:p-0 print:overflow-visible">
       <div className="max-w-[850px] mx-auto bg-white shadow-2xl p-12 md:p-20 text-black font-serif relative leading-normal print:shadow-none print:max-w-none print:w-full print:p-0">
         
@@ -260,13 +146,125 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, 
       </div>
     </div>
   );
+};
+
+const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, onDelete, initialData }) => {
+  const [activeTab, setActiveTab] = useState<'DATA_PEGAWAI' | 'SKP_LAMA' | 'SKP_BARU'>('DATA_PEGAWAI');
+  const [isScanning, setIsScanning] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  
+  const [formData, setFormData] = useState<Partial<Employee>>({
+    nama: '',
+    nip: '',
+    golongan: Golongan.IIIA,
+    jabatan: '',
+    tempatLahir: '',
+    tanggalLahir: '',
+    noHp: '',
+    gajiPokokLama: '',
+    nomorSkpTerakhir: '',
+    tglSkpTerakhir: '',
+    tglMulaiGajiLama: '',
+    masaKerjaGolonganLama: '',
+    gajiPokokBaru: '',
+    masaKerjaBaru: '',
+    golonganBaru: '',
+    keterangan: '',
+    unitKerja: 'DINAS PENANAMAN MODAL DAN PTSP PROV. NTB',
+  });
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData({ ...initialData });
+    } else {
+      setFormData({
+        nama: '',
+        nip: '',
+        golongan: Golongan.IIIA,
+        jabatan: '',
+        tempatLahir: '',
+        tanggalLahir: '',
+        noHp: '',
+        gajiPokokLama: '',
+        nomorSkpTerakhir: '',
+        tglSkpTerakhir: '',
+        tglMulaiGajiLama: '',
+        masaKerjaGolonganLama: '',
+        gajiPokokBaru: '',
+        masaKerjaBaru: '',
+        golonganBaru: '',
+        keterangan: '',
+        unitKerja: 'DINAS PENANAMAN MODAL DAN PTSP PROV. NTB',
+      });
+    }
+    setActiveTab('DATA_PEGAWAI');
+    setShowPreview(false);
+  }, [initialData, isOpen]);
+
+  if (!isOpen) return null;
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    
+    if (name === 'gajiPokokLama' || name === 'gajiPokokBaru') {
+      const formattedValue = formatRupiah(value);
+      setFormData(prev => ({ ...prev, [name]: formattedValue }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsScanning(true);
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64String = (reader.result as string).split(',')[1];
+      const extractedData = await extractEmployeeDataFromImage(base64String);
+      if (extractedData) {
+        const formattedExtracted = { ...extractedData };
+        if (formattedExtracted.gajiPokokLama) formattedExtracted.gajiPokokLama = formatRupiah(formattedExtracted.gajiPokokLama);
+        if (formattedExtracted.gajiPokokBaru) formattedExtracted.gajiPokokBaru = formatRupiah(formattedExtracted.gajiPokokBaru);
+        
+        setFormData(prev => ({ ...prev, ...formattedExtracted }));
+      }
+      setIsScanning(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const employee: Employee = {
+      ...(formData as Employee),
+      id: initialData?.id || Math.random().toString(36).substr(2, 9),
+      tmtGolongan: formData.tmtGolongan || new Date().toISOString().split('T')[0],
+      tmtKgb: formData.tmtKgb || new Date().toISOString().split('T')[0],
+      avatar: initialData?.avatar || `https://picsum.photos/seed/${formData.nama}/200`
+    };
+    onSave(employee);
+    onClose();
+  };
+
+  const handleDelete = () => {
+    if (initialData && onDelete) {
+      if (window.confirm(`Apakah Anda yakin ingin menghapus data pegawai "${initialData.nama}" secara permanen?`)) {
+        onDelete(initialData.id);
+        onClose();
+      }
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-fadeIn print:hidden">
       <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[95vh] border border-slate-100 relative">
         
         {/* Letter Preview Overlay */}
-        {showPreview && <LetterPreview />}
+        {showPreview && <LetterPreview formData={formData} setShowPreview={setShowPreview} />}
 
         {/* Header Section - Compact */}
         <div className="px-8 py-5 border-b border-slate-100 flex justify-between items-center bg-white relative z-10">
@@ -300,7 +298,7 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, 
           </div>
         </div>
 
-        {/* Tab Navigation - Tighter */}
+        {/* Tab Navigation */}
         <div className="flex px-8 border-b border-slate-50 bg-white relative z-10">
           {[
             { id: 'DATA_PEGAWAI', label: '1. Data Pegawai' },
@@ -317,11 +315,10 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, 
           ))}
         </div>
 
-        {/* Form Body - More Compact Spacing */}
+        {/* Form Body */}
         <div className="flex-1 overflow-y-auto p-8 bg-slate-50/20">
           <form id="employee-form" onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-8">
             
-            {/* MENU 1: DATA PEGAWAI */}
             {activeTab === 'DATA_PEGAWAI' && (
               <div className="grid grid-cols-2 gap-x-8 gap-y-5 animate-fadeIn">
                 <div className="col-span-2">
@@ -360,7 +357,6 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, 
               </div>
             )}
 
-            {/* MENU 2: SKP LAMA */}
             {activeTab === 'SKP_LAMA' && (
               <div className="grid grid-cols-2 gap-x-8 gap-y-5 animate-fadeIn">
                 <div className="col-span-2 bg-indigo-50/40 p-5 rounded-2xl border border-indigo-100 flex items-center mb-2">
@@ -395,7 +391,6 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, 
               </div>
             )}
 
-            {/* MENU 3: SKP BARU */}
             {activeTab === 'SKP_BARU' && (
               <div className="grid grid-cols-2 gap-x-8 gap-y-5 animate-fadeIn">
                 <div className="col-span-2 bg-emerald-50/40 p-5 rounded-2xl border border-emerald-100 flex items-center mb-2">
@@ -442,7 +437,7 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, 
           </form>
         </div>
 
-        {/* Footer Area - Compact */}
+        {/* Footer Area */}
         <div className="px-8 py-4 border-t border-slate-100 bg-white relative z-10 flex justify-between items-center">
           <div>
             {initialData && (

@@ -30,7 +30,7 @@ const App: React.FC = () => {
   const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
   useEffect(() => {
-    if (isSupabaseConfigured) {
+    if (isSupabaseConfigured && supabase) {
       fetchEmployees();
     }
   }, []);
@@ -148,7 +148,7 @@ const App: React.FC = () => {
   const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden font-sans">
+    <div className="flex h-screen bg-gray-50 overflow-hidden font-sans text-slate-900">
       <aside className="w-72 bg-slate-900 text-white flex flex-col hidden lg:flex shadow-2xl relative z-20">
         <div className="p-8 border-b border-slate-800 flex items-center space-x-4">
           <div className="w-10 h-10 bg-indigo-500 rounded-2xl flex items-center justify-center font-black text-2xl shadow-lg shadow-indigo-500/30">H</div>
@@ -170,13 +170,13 @@ const App: React.FC = () => {
         <div className="p-6">
           <div className="bg-slate-800/50 backdrop-blur-sm rounded-3xl p-5 border border-slate-700/50 text-center">
              <div className="flex items-center justify-center space-x-2 mb-2">
-               <div className={`w-2 h-2 rounded-full ${isSupabaseConfigured ? 'bg-emerald-500' : 'bg-orange-500 animation-pulse'}`}></div>
+               <div className={`w-2 h-2 rounded-full ${isSupabaseConfigured ? 'bg-emerald-500' : 'bg-orange-500 animate-pulse'}`}></div>
                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">
                  {isSupabaseConfigured ? 'Database Online' : 'Local Storage'}
                </span>
              </div>
              {!isSupabaseConfigured && (
-               <p className="text-[9px] text-slate-500 mt-2 font-medium">Data tidak akan tersimpan permanen di Cloud.</p>
+               <p className="text-[9px] text-slate-500 mt-2 font-medium leading-relaxed">Hubungkan Supabase di Vercel untuk mengaktifkan sinkronisasi cloud.</p>
              )}
           </div>
         </div>
