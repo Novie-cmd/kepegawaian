@@ -78,21 +78,31 @@ const App: React.FC = () => {
   };
 
   const handleSaveEmployee = async (emp: Employee) => {
+    // Bersihkan data dari undefined untuk menghindari error Supabase
+    const cleanData = Object.fromEntries(
+      Object.entries(emp).map(([key, value]) => [key, value === undefined ? null : value])
+    );
+
     if (isSupabaseConfigured && supabase) {
       try {
         if (selectedEmployee) {
-          const { error } = await supabase.from('employees').update(emp).eq('id', emp.id);
+          const { error } = await supabase.from('employees').update(cleanData).eq('id', emp.id);
           if (error) throw error;
-          setEmployees(prev => prev.map(e => e.id === emp.id ? emp : e));
+          setEmployees(prev => prev.map(e => e.id === emp.id ? (cleanData as Employee) : e));
           setToast({ message: 'Data Cloud diperbarui!', type: 'success' });
         } else {
-          const { error } = await supabase.from('employees').insert([emp]);
+          const { error } = await supabase.from('employees').insert([cleanData]);
           if (error) throw error;
-          setEmployees(prev => [emp, ...prev]);
+          setEmployees(prev => [cleanData as Employee, ...prev]);
           setToast({ message: 'Tersimpan di Cloud!', type: 'success' });
         }
       } catch (err: any) {
-        setToast({ message: 'Gagal simpan: ' + err.message, type: 'error' });
+        console.error("Supabase Save Error:", err);
+        let msg = err.message;
+        if (msg.includes('column') || msg.includes('find')) {
+          msg = "Kolom database tidak cocok. Harap jalankan SQL Fix di Supabase Dashboard.";
+        }
+        setToast({ message: 'Gagal: ' + msg, type: 'error' });
       }
     } else {
       if (selectedEmployee) {
@@ -102,7 +112,7 @@ const App: React.FC = () => {
       }
       setToast({ message: 'Tersimpan Lokal (Demo)', type: 'info' });
     }
-    setTimeout(() => setToast(null), 3000);
+    setTimeout(() => setToast(null), 4000);
   };
 
   const handleDeleteEmployee = async (id: string) => {
@@ -111,24 +121,16 @@ const App: React.FC = () => {
     if (isSupabaseConfigured && supabase) {
       try {
         const { error } = await supabase.from('employees').delete().eq('id', id);
-        
-        if (error) {
-          console.error("Supabase Delete Error:", error);
-          throw error;
-        }
-
-        // Update state lokal setelah berhasil di Cloud
+        if (error) throw error;
         setEmployees(prev => prev.filter(e => e.id !== id));
         setToast({ message: 'Data berhasil dihapus dari Cloud', type: 'success' });
       } catch (err: any) {
         setToast({ message: 'Gagal menghapus: ' + (err.message || 'Cek RLS Policy'), type: 'error' });
       }
     } else {
-      // Mode Lokal
       setEmployees(prev => prev.filter(e => e.id !== id));
       setToast({ message: 'Dihapus dari penyimpanan lokal', type: 'success' });
     }
-    
     setTimeout(() => setToast(null), 3000);
   };
 
@@ -313,20 +315,4 @@ const App: React.FC = () => {
                     </button>
                     {aiReport && (
                       <div className="text-left bg-slate-50 p-10 rounded-[2.5rem] border border-slate-100 animate-fadeIn whitespace-pre-wrap font-medium leading-relaxed text-slate-700 shadow-inner">
-                        {aiReport}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </main>
-
-      <EmployeeModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setSelectedEmployee(null); }} onSave={handleSaveEmployee} initialData={selectedEmployee} onDelete={handleDeleteEmployee} />
-    </div>
-  );
-};
-
-export default App;
+                        {aiReport
