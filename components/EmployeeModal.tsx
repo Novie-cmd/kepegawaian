@@ -18,10 +18,10 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
     window.print();
   };
 
-  // URL Logo NTB dengan prioritas stabilitas (Thumbnail Wikimedia biasanya paling stabil)
-  const primaryLogo = "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Coat_of_arms_of_West_Nusa_Tenggara.png/480px-Coat_of_arms_of_West_Nusa_Tenggara.png";
+  // URL Logo NTB yang paling stabil
+  const primaryLogo = "https://upload.wikimedia.org/wikipedia/commons/0/07/Coat_of_arms_of_West_Nusa_Tenggara.png";
   const secondaryLogo = "https://ntbprov.go.id/uploads/logo/logo_ntb.png";
-  const tertiaryLogo = "https://upload.wikimedia.org/wikipedia/commons/0/07/Coat_of_arms_of_West_Nusa_Tenggara.png";
+  const tertiaryLogo = "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Coat_of_arms_of_West_Nusa_Tenggara.png/512px-Coat_of_arms_of_West_Nusa_Tenggara.png";
 
   return (
     <div id="print-area" className="fixed inset-0 z-[100] bg-slate-900/60 p-4 md:p-8 overflow-y-auto animate-fadeIn backdrop-blur-sm print:bg-white print:p-0 print:overflow-visible">
@@ -46,30 +46,26 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
 
         {/* Kop Surat Resmi */}
         <div className="flex items-center border-b-[3px] border-black pb-1 mb-1 relative print:mt-2 min-h-[140px]">
-          <div className="w-32 flex-shrink-0 flex justify-center items-center py-2 h-32 mr-4">
+          <div className="w-32 flex-shrink-0 flex justify-center items-center py-2 h-32 mr-4 overflow-hidden">
              <img 
                src={primaryLogo} 
                alt="Lambang Provinsi NTB" 
                title="Lambang Provinsi NTB"
-               className="h-28 w-auto object-contain block"
+               className="h-28 w-auto object-contain block print:block"
+               style={{ 
+                 display: 'block', 
+                 visibility: 'visible',
+                 minHeight: '112px'
+               }}
                referrerPolicy="no-referrer"
                loading="eager"
+               crossOrigin="anonymous"
                onError={(e) => {
                  const target = e.target as HTMLImageElement;
                  if (target.src === primaryLogo) {
                    target.src = secondaryLogo;
                  } else if (target.src === secondaryLogo) {
                    target.src = tertiaryLogo;
-                 } else {
-                   // Jika semua gagal, tampilkan teks sebagai penanda (hanya jika darurat)
-                   target.style.display = 'none';
-                   const parent = target.parentElement;
-                   if (parent && !parent.querySelector('.fallback-text')) {
-                     const text = document.createElement('div');
-                     text.className = 'fallback-text text-[10px] font-bold text-center';
-                     text.innerText = 'LOGO NTB';
-                     parent.appendChild(text);
-                   }
                  }
                }}
              />
