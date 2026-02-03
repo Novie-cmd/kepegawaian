@@ -18,6 +18,10 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
     window.print();
   };
 
+  // URL Logo NTB (Menggunakan URL langsung yang lebih stabil)
+  const logoUrl = "https://upload.wikimedia.org/wikipedia/commons/0/07/Coat_of_arms_of_West_Nusa_Tenggara.png";
+  const fallbackLogoUrl = "https://ntbprov.go.id/uploads/logo/logo_ntb.png";
+
   return (
     <div id="print-area" className="fixed inset-0 z-[100] bg-slate-900/60 p-4 md:p-8 overflow-y-auto animate-fadeIn backdrop-blur-sm print:bg-white print:p-0 print:overflow-visible">
       <div className="max-w-[850px] mx-auto bg-white shadow-2xl p-10 md:p-16 text-black font-serif relative leading-normal print:shadow-none print:max-w-none print:w-full print:p-0">
@@ -43,10 +47,16 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
         <div className="flex items-center border-b-[3px] border-black pb-1 mb-1 relative print:mt-2">
           <div className="w-28 flex-shrink-0 flex justify-center items-center py-2">
              <img 
-               src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Coat_of_arms_of_West_Nusa_Tenggara.png/300px-Coat_of_arms_of_West_Nusa_Tenggara.png" 
-               alt="Logo Provinsi NTB" 
+               src={logoUrl} 
+               alt="Lambang Provinsi NTB" 
                className="h-28 w-auto object-contain block"
-               style={{ filter: 'contrast(1.1)' }}
+               style={{ minWidth: '80px' }}
+               onError={(e) => {
+                 const target = e.target as HTMLImageElement;
+                 if (target.src !== fallbackLogoUrl) {
+                   target.src = fallbackLogoUrl;
+                 }
+               }}
              />
           </div>
           <div className="flex-1 text-center pr-10">
