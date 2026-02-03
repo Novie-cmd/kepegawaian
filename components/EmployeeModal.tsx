@@ -18,9 +18,12 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
     window.print();
   };
 
-  // URL Logo NTB (Menggunakan URL langsung yang lebih stabil)
-  const logoUrl = "https://upload.wikimedia.org/wikipedia/commons/0/07/Coat_of_arms_of_West_Nusa_Tenggara.png";
-  const fallbackLogoUrl = "https://ntbprov.go.id/uploads/logo/logo_ntb.png";
+  // Daftar URL Logo NTB dari berbagai sumber untuk redundansi
+  const logoSources = [
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Coat_of_arms_of_West_Nusa_Tenggara.png/240px-Coat_of_arms_of_West_Nusa_Tenggara.png",
+    "https://ntbprov.go.id/uploads/logo/logo_ntb.png",
+    "https://lh3.googleusercontent.com/proxy/reliable_public_ntb_logo_link" // Placeholder jika link utama mati
+  ];
 
   return (
     <div id="print-area" className="fixed inset-0 z-[100] bg-slate-900/60 p-4 md:p-8 overflow-y-auto animate-fadeIn backdrop-blur-sm print:bg-white print:p-0 print:overflow-visible">
@@ -47,14 +50,19 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
         <div className="flex items-center border-b-[3px] border-black pb-1 mb-1 relative print:mt-2">
           <div className="w-28 flex-shrink-0 flex justify-center items-center py-2">
              <img 
-               src={logoUrl} 
+               src={logoSources[0]} 
                alt="Lambang Provinsi NTB" 
                className="h-28 w-auto object-contain block"
-               style={{ minWidth: '80px' }}
+               referrerPolicy="no-referrer"
+               style={{ minWidth: '85px' }}
                onError={(e) => {
                  const target = e.target as HTMLImageElement;
-                 if (target.src !== fallbackLogoUrl) {
-                   target.src = fallbackLogoUrl;
+                 // Coba sumber cadangan secara berurutan
+                 if (target.src === logoSources[0]) {
+                   target.src = logoSources[1];
+                 } else if (target.src === logoSources[1]) {
+                   // Jika semua gagal, gunakan placeholder yang elegan
+                   target.src = "https://via.placeholder.com/150x180?text=LOGO+NTB";
                  }
                }}
              />
