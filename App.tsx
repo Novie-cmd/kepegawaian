@@ -28,7 +28,7 @@ const App: React.FC = () => {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'info' | 'error' } | null>(null);
   
-  // States for Date Filtering
+  // Filter States
   const [filterMonth, setFilterMonth] = useState<number>(new Date().getMonth());
   const [filterYear, setFilterYear] = useState<number>(new Date().getFullYear());
 
@@ -119,16 +119,11 @@ const App: React.FC = () => {
         } else {
           result = await supabase.from('employees').insert([payload]);
         }
-
         if (result.error) throw result.error;
-
         await fetchEmployees();
-        setToast({ message: 'Berhasil sinkronisasi dengan Cloud!', type: 'success' });
+        setToast({ message: 'Berhasil sinkronisasi!', type: 'success' });
       } catch (err: any) {
-        setToast({ 
-          message: `Error DB: ${err.message || 'Cek koneksi'}.`, 
-          type: 'error' 
-        });
+        setToast({ message: `Error DB: ${err.message}`, type: 'error' });
       }
     } else {
       if (selectedEmployee) {
@@ -136,27 +131,20 @@ const App: React.FC = () => {
       } else {
         setEmployees(prev => [emp, ...prev]);
       }
-      setToast({ message: 'Tersimpan (Mode Demo/Lokal)', type: 'info' });
+      setToast({ message: 'Tersimpan (Lokal)', type: 'info' });
     }
-    setTimeout(() => setToast(null), 5000);
+    setTimeout(() => setToast(null), 3000);
   };
 
   const handleDeleteEmployee = async (id: string) => {
-    setToast({ message: 'Menghapus data...', type: 'info' });
     if (isSupabaseConfigured && supabase) {
       try {
-        const { error } = await supabase.from('employees').delete().eq('id', id);
-        if (error) throw error;
+        await supabase.from('employees').delete().eq('id', id);
         setEmployees(prev => prev.filter(e => e.id !== id));
-        setToast({ message: 'Data dihapus dari Cloud', type: 'success' });
-      } catch (err: any) {
-        setToast({ message: 'Gagal hapus: ' + err.message, type: 'error' });
-      }
+      } catch (err) {}
     } else {
       setEmployees(prev => prev.filter(e => e.id !== id));
-      setToast({ message: 'Dihapus secara lokal', type: 'success' });
     }
-    setTimeout(() => setToast(null), 3000);
   };
 
   const generateAiReport = async () => {
@@ -186,7 +174,7 @@ const App: React.FC = () => {
     return Object.entries(groups).map(([name, value]) => ({ name, value }));
   }, [employees]);
 
-  // Logic for filtered monitoring tables based on Month and Year
+  // Combined filtering logic for monitoring
   const monitoringData = useMemo(() => {
     return employees.filter(e => {
       let targetDate: Date;
@@ -206,204 +194,157 @@ const App: React.FC = () => {
   const yearOptions = useMemo(() => {
     const currentYear = new Date().getFullYear();
     const years = [];
-    for (let i = currentYear - 5; i <= currentYear + 10; i++) {
-      years.push(i);
-    }
+    for (let i = currentYear - 2; i <= currentYear + 10; i++) years.push(i);
     return years;
   }, []);
 
-  if (!isAuthenticated) {
-    return <LoginView onLogin={handleLogin} />;
-  }
+  if (!isAuthenticated) return <LoginView onLogin={handleLogin} />;
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden font-sans text-slate-900">
       <aside className="w-72 bg-slate-900 text-white flex flex-col hidden lg:flex shadow-2xl relative z-20">
         <div className="p-8 border-b border-slate-800 flex items-center space-x-4">
-          <div className="w-10 h-10 bg-indigo-500 rounded-2xl flex items-center justify-center font-black text-2xl shadow-lg shadow-indigo-500/30">H</div>
+          <div className="w-10 h-10 bg-indigo-500 rounded-2xl flex items-center justify-center font-black text-2xl">H</div>
           <div>
             <span className="text-xl font-black tracking-tight block">HR-Pro</span>
-            <span className={`text-[10px] font-bold uppercase tracking-widest leading-none ${isSupabaseConfigured ? 'text-emerald-400' : 'text-orange-400'}`}>
-              {isSupabaseConfigured ? 'CLOUD MODE ACTIVE' : 'MODE DEMO'}
-            </span>
+            <span className="text-[9px] text-slate-400 font-bold tracking-widest uppercase">DPMPTSP NTB</span>
           </div>
         </div>
         <nav className="flex-1 p-6 space-y-2 overflow-y-auto">
           {NAV_ITEMS.map(item => (
-            <button key={item.id} onClick={() => setCurrentView(item.id as ViewType)} className={`w-full flex items-center space-x-4 px-5 py-4 rounded-2xl transition-all duration-300 group ${currentView === item.id ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/20 translate-x-1' : 'text-slate-400 hover:bg-slate-800 hover:text-white hover:translate-x-1'}`}>
-              <div className={`${currentView === item.id ? 'text-white' : 'text-slate-500 group-hover:text-indigo-400'}`}>{item.icon}</div>
+            <button key={item.id} onClick={() => setCurrentView(item.id as ViewType)} className={`w-full flex items-center space-x-4 px-5 py-4 rounded-2xl transition-all ${currentView === item.id ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
+              <div className={`${currentView === item.id ? 'text-white' : 'text-slate-500'}`}>{item.icon}</div>
               <span className="font-bold text-sm tracking-wide">{item.label}</span>
             </button>
           ))}
         </nav>
-        <div className="p-6 space-y-4">
-          <div className={`rounded-3xl p-5 border text-center transition-all ${isSupabaseConfigured ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-slate-800/50 border-slate-700/50'}`}>
-             <div className="flex items-center justify-center space-x-2 mb-2">
-               <div className={`w-2 h-2 rounded-full ${isSupabaseConfigured ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-orange-500 animate-pulse'}`}></div>
-               <span className={`text-[9px] font-black uppercase tracking-widest ${isSupabaseConfigured ? 'text-emerald-400' : 'text-slate-400'}`}>
-                 {isSupabaseConfigured ? 'Database Online' : 'Local Storage Only'}
-               </span>
-             </div>
-          </div>
+        <div className="p-6">
           <button onClick={handleLogout} className="w-full flex items-center justify-center space-x-3 px-5 py-4 rounded-2xl text-slate-400 hover:bg-rose-500/10 hover:text-rose-500 transition-all font-bold text-xs uppercase tracking-widest border border-transparent hover:border-rose-500/20">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
             <span>Logout</span>
           </button>
         </div>
       </aside>
 
-      <main className="flex-1 flex flex-col overflow-hidden relative">
+      <main className="flex-1 flex flex-col overflow-hidden">
         {toast && (
           <div className="fixed top-24 right-8 z-50 animate-slideInRight">
-            <div className={`px-8 py-5 rounded-[2rem] shadow-2xl flex items-center space-x-4 border ${toast.type === 'success' ? 'bg-emerald-50 border-emerald-100 text-emerald-800' : toast.type === 'error' ? 'bg-rose-50 border-rose-100 text-rose-800' : 'bg-blue-50 border-blue-100 text-blue-800'}`}>
-              <div className={`p-2 rounded-xl ${toast.type === 'success' ? 'bg-emerald-500' : toast.type === 'error' ? 'bg-rose-500' : 'bg-blue-500'} text-white shadow-lg`}>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"/></svg>
-              </div>
-              <p className="font-black text-sm uppercase tracking-tight">{toast.message}</p>
+            <div className={`px-8 py-4 rounded-2xl shadow-2xl border ${toast.type === 'success' ? 'bg-emerald-50 border-emerald-100 text-emerald-800' : 'bg-blue-50 border-blue-100 text-blue-800'}`}>
+              <p className="font-black text-xs uppercase tracking-widest">{toast.message}</p>
             </div>
           </div>
         )}
 
-        <header className="bg-white border-b border-gray-100 px-10 py-8 flex items-center justify-between sticky top-0 z-10 shadow-sm">
+        <header className="bg-white border-b border-gray-100 px-10 py-8 flex items-center justify-between z-10 shadow-sm">
           <div>
             <h1 className="text-3xl font-black text-slate-900 tracking-tight">{NAV_ITEMS.find(n => n.id === currentView)?.label}</h1>
-            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">DPMPTSP PROVINSI NTB</p>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Sistem Kontrol Pegawai</p>
           </div>
-          <div className="flex items-center space-x-8">
-            <button onClick={fetchEmployees} className={`p-3 text-slate-400 hover:text-indigo-600 transition-all ${isLoadingData ? 'animate-spin' : ''}`}>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357-2H15"/></svg>
-            </button>
+          <div className="flex items-center space-x-6">
             <div className="relative group">
               <span className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-300 group-focus-within:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <svg className="h-5 w-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
               </span>
-              <input type="text" placeholder="Cari NIP atau Nama..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-14 pr-8 py-4 bg-gray-50 border border-gray-100 rounded-[1.5rem] text-sm font-bold text-slate-700 focus:ring-4 focus:ring-indigo-500/10 focus:bg-white focus:border-indigo-300 outline-none w-[20rem] transition-all shadow-sm" />
+              <input type="text" placeholder="Cari Pegawai..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-14 pr-8 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold text-slate-700 outline-none w-[18rem] focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all" />
             </div>
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-12 bg-gray-50/50">
-          {isLoadingData ? (
-            <div className="h-full flex flex-col items-center justify-center space-y-4">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-              <p className="font-black text-slate-400 uppercase tracking-widest text-xs">Sinkronisasi Data...</p>
-            </div>
-          ) : (
-            <div className="space-y-12 animate-fadeIn">
-              {currentView === 'DASHBOARD' && (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
-                    {stats.map((s, idx) => <StatCard key={idx} {...s} />)}
-                  </div>
-                  <div className="grid grid-cols-1 xl:grid-cols-3 gap-12">
-                    <div className="xl:col-span-2 bg-white p-10 rounded-[3rem] shadow-xl shadow-slate-200/40 border border-white">
-                      <h3 className="text-2xl font-black text-slate-800 tracking-tight mb-10">Distribusi Golongan</h3>
-                      <div className="h-80">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={chartData}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12, fontWeight: 800}} dy={15} />
-                            <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12, fontWeight: 800}} />
-                            <Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{borderRadius: '24px', border: 'none', boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.15)', padding: '16px', fontWeight: 'bold'}} />
-                            <Bar dataKey="value" radius={[12, 12, 12, 12]} barSize={45}>
-                              {chartData.map((entry, index) => <Cell key={`cell-${index}`} fill={['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'][index % 6]} />)}
-                            </Bar>
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {currentView === 'DATA_PEGAWAI' && (
-                <div className="space-y-10">
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-4xl font-black text-slate-900 tracking-tight">Master Data Pegawai</h2>
-                    <button onClick={() => { setSelectedEmployee(null); setIsModalOpen(true); }} className="bg-indigo-600 text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest shadow-2xl shadow-indigo-600/30 hover:bg-indigo-700 transition-all flex items-center space-x-4">
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                      <span>Tambah Pegawai</span>
-                    </button>
-                  </div>
-                  <EmployeeTable employees={filteredEmployees} onAction={(e) => { setSelectedEmployee(e); setIsModalOpen(true); }} onDelete={handleDeleteEmployee} type="NORMAL" />
+        <div className="flex-1 overflow-y-auto p-10 bg-gray-50/50">
+          <div className="space-y-10">
+            {currentView === 'DASHBOARD' && (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                  {stats.map((s, idx) => <StatCard key={idx} {...s} />)}
                 </div>
-              )}
-
-              {(currentView === 'KONTROL_PANGKAT' || currentView === 'KONTROL_KGB' || currentView === 'KONTROL_PENSIUN') && (
-                <div className="space-y-10">
-                   <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col md:flex-row items-center gap-6">
-                    <div className="flex-1">
-                      <h2 className="text-2xl font-black text-slate-900 tracking-tight">Monitoring {currentView === 'KONTROL_PANGKAT' ? 'Kenaikan Pangkat' : currentView === 'KONTROL_KGB' ? 'Kenaikan Gaji Berkala' : 'Pensiun'}</h2>
-                      <p className="text-xs text-slate-400 font-bold uppercase mt-1">Gunakan filter untuk memantau periode tertentu</p>
-                    </div>
-                    
-                    {/* Period Filters */}
-                    <div className="flex items-center space-x-4 bg-slate-50 p-2 rounded-3xl border border-slate-100 shadow-inner">
-                      <div className="flex items-center space-x-2 px-4">
-                        <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                        <select 
-                          value={filterMonth} 
-                          onChange={(e) => setFilterMonth(parseInt(e.target.value))}
-                          className="bg-transparent border-none font-black text-[10px] uppercase tracking-widest text-slate-700 outline-none cursor-pointer focus:ring-0"
-                        >
-                          {MONTHS.map((m, idx) => <option key={m} value={idx}>{m}</option>)}
-                        </select>
-                      </div>
-                      <div className="w-px h-6 bg-slate-200"></div>
-                      <div className="px-4">
-                        <select 
-                          value={filterYear} 
-                          onChange={(e) => setFilterYear(parseInt(e.target.value))}
-                          className="bg-transparent border-none font-black text-[10px] uppercase tracking-widest text-slate-700 outline-none cursor-pointer focus:ring-0"
-                        >
-                          {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
-                        </select>
-                      </div>
-                    </div>
+                <div className="bg-white p-10 rounded-[2.5rem] shadow-xl border border-white">
+                  <h3 className="text-xl font-black text-slate-800 tracking-tight mb-8">Distribusi Golongan</h3>
+                  <div className="h-72">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 800}} dy={10} />
+                        <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 800}} />
+                        <Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}} />
+                        <Bar dataKey="value" radius={[8, 8, 8, 8]} barSize={40}>
+                          {chartData.map((_, index) => <Cell key={`cell-${index}`} fill={['#6366f1', '#10b981', '#f59e0b', '#ef4444'][index % 4]} />)}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
+                </div>
+              </>
+            )}
 
-                  <EmployeeTable 
-                    employees={monitoringData} 
-                    onAction={(e) => { setSelectedEmployee(e); setIsModalOpen(true); }} 
-                    onDelete={handleDeleteEmployee}
-                    type={currentView === 'KONTROL_PANGKAT' ? 'PANGKAT' : currentView === 'KONTROL_KGB' ? 'KGB' : 'PENSIUN'} 
-                  />
+            {currentView === 'DATA_PEGAWAI' && (
+              <div className="space-y-8">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-2xl font-black text-slate-900 tracking-tight">Daftar Pegawai</h2>
+                  <button onClick={() => { setSelectedEmployee(null); setIsModalOpen(true); }} className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-indigo-700 transition-all flex items-center space-x-3">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                    <span>Pegawai Baru</span>
+                  </button>
+                </div>
+                <EmployeeTable employees={filteredEmployees} onAction={(e) => { setSelectedEmployee(e); setIsModalOpen(true); }} onDelete={handleDeleteEmployee} type="NORMAL" />
+              </div>
+            )}
+
+            {(currentView === 'KONTROL_PANGKAT' || currentView === 'KONTROL_KGB' || currentView === 'KONTROL_PENSIUN') && (
+              <div className="space-y-8">
+                <div className="bg-white p-8 rounded-[2rem] border border-slate-100 flex flex-col md:flex-row items-center gap-6 shadow-sm">
+                  <div className="flex-1">
+                    <h2 className="text-xl font-black text-slate-900 tracking-tight">Monitoring {currentView.split('_')[1]}</h2>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Pilih periode untuk pemantauan tepat</p>
+                  </div>
                   
-                  {monitoringData.length === 0 && (
-                    <div className="bg-white/50 border-2 border-dashed border-slate-200 rounded-[2.5rem] p-20 text-center space-y-4">
-                       <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-300">
-                          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
-                       </div>
-                       <p className="text-sm font-black text-slate-400 uppercase tracking-widest">Tidak ada pegawai yang jatuh tempo pada {MONTHS[filterMonth]} {filterYear}</p>
+                  {/* Period Selection Filters */}
+                  <div className="flex items-center space-x-3 bg-slate-50 p-2 rounded-2xl border border-slate-100">
+                    <div className="flex items-center space-x-2 px-3">
+                       <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                       <select value={filterMonth} onChange={(e) => setFilterMonth(parseInt(e.target.value))} className="bg-transparent border-none font-black text-[10px] uppercase tracking-widest text-slate-700 outline-none cursor-pointer focus:ring-0">
+                          {MONTHS.map((m, idx) => <option key={m} value={idx}>{m}</option>)}
+                       </select>
                     </div>
-                  )}
-                </div>
-              )}
-
-              {currentView === 'AI_REPORT' && (
-                <div className="space-y-10 max-w-4xl mx-auto">
-                  <div className="bg-white p-12 rounded-[3rem] shadow-2xl border border-indigo-50 text-center space-y-8">
-                    <div className="w-20 h-20 bg-indigo-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-xl shadow-indigo-200">
-                      <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                    <div className="w-px h-5 bg-slate-200"></div>
+                    <div className="px-3">
+                       <select value={filterYear} onChange={(e) => setFilterYear(parseInt(e.target.value))} className="bg-transparent border-none font-black text-[10px] uppercase tracking-widest text-slate-700 outline-none cursor-pointer focus:ring-0">
+                          {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
+                       </select>
                     </div>
-                    <div className="space-y-4">
-                      <h2 className="text-3xl font-black text-slate-900 tracking-tight">Analisis Data Strategis AI</h2>
-                      <p className="text-slate-500 font-medium">Berdasarkan data cloud terbaru yang diinput semua orang.</p>
-                    </div>
-                    <button onClick={generateAiReport} disabled={isLoadingAi} className="bg-indigo-600 text-white px-12 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-200 hover:bg-indigo-700 transition-all flex items-center space-x-4 mx-auto disabled:opacity-50">
-                      {isLoadingAi ? <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>}
-                      <span>Mulai Analisis Global</span>
-                    </button>
-                    {aiReport && (
-                      <div className="text-left bg-slate-50 p-10 rounded-[2.5rem] border border-slate-100 animate-fadeIn whitespace-pre-wrap font-medium leading-relaxed text-slate-700 shadow-inner">
-                        {aiReport}
-                      </div>
-                    )}
                   </div>
                 </div>
-              )}
-            </div>
-          )}
+                
+                <EmployeeTable 
+                  employees={monitoringData} 
+                  onAction={(e) => { setSelectedEmployee(e); setIsModalOpen(true); }} 
+                  onDelete={handleDeleteEmployee}
+                  type={currentView === 'KONTROL_PANGKAT' ? 'PANGKAT' : currentView === 'KONTROL_KGB' ? 'KGB' : 'PENSIUN'} 
+                />
+
+                {monitoringData.length === 0 && (
+                  <div className="bg-white/50 border-2 border-dashed border-slate-200 rounded-[2rem] p-16 text-center">
+                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Tidak ada data untuk periode ini</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {currentView === 'AI_REPORT' && (
+              <div className="bg-white p-12 rounded-[3rem] shadow-xl border border-indigo-50 text-center space-y-8 max-w-3xl mx-auto">
+                <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto">
+                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                </div>
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Analisis Kepegawaian AI</h2>
+                <button onClick={generateAiReport} disabled={isLoadingAi} className="bg-indigo-600 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 disabled:opacity-50 transition-all">
+                  {isLoadingAi ? 'Menganalisis...' : 'Mulai Analisis'}
+                </button>
+                {aiReport && (
+                  <div className="text-left bg-slate-50 p-8 rounded-[2rem] border border-slate-100 animate-fadeIn whitespace-pre-wrap font-medium text-slate-700 text-sm leading-relaxed">
+                    {aiReport}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </main>
 
