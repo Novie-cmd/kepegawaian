@@ -39,30 +39,30 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
           </button>
         </div>
 
-        {/* Kop Surat */}
-        <div className="flex items-center border-b-[3px] border-black pb-4 mb-6 relative print:mt-4">
-          <div className="w-24 flex-shrink-0 flex justify-center items-center">
+        {/* Kop Surat Resmi */}
+        <div className="flex items-center border-b-[3px] border-black pb-1 mb-1 relative print:mt-2">
+          <div className="w-28 flex-shrink-0 flex justify-center items-center py-2">
              <img 
                src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Coat_of_arms_of_West_Nusa_Tenggara.png/300px-Coat_of_arms_of_West_Nusa_Tenggara.png" 
                alt="Logo Provinsi NTB" 
-               className="h-24 w-auto object-contain block"
-               onError={(e) => {
-                 (e.target as HTMLImageElement).src = "https://via.placeholder.com/100x120?text=LOGO+NTB";
-               }}
+               className="h-28 w-auto object-contain block"
+               style={{ filter: 'contrast(1.1)' }}
              />
           </div>
           <div className="flex-1 text-center pr-10">
-            <h1 className="text-[18px] font-bold uppercase tracking-wide leading-tight">Pemerintah Provinsi Nusa Tenggara Barat</h1>
-            <h2 className="text-[16px] font-bold uppercase leading-tight">Dinas Penanaman Modal Dan</h2>
-            <h2 className="text-[16px] font-bold uppercase leading-tight">Pelayanan Terpadu Satu Pintu</h2>
-            <p className="text-[10px] mt-2 font-sans">Jalan Udayana No. 4 Selaparang. Kota Mataram, Nusa Tenggara Barat 83122,</p>
-            <p className="text-[10px] font-sans">Telepon (0370) 631060 - 632632, Faksimile (0370) 6634926</p>
+            <h1 className="text-[20px] font-bold uppercase tracking-tight leading-tight">Pemerintah Provinsi Nusa Tenggara Barat</h1>
+            <h2 className="text-[18px] font-bold uppercase leading-tight mt-1">Dinas Penanaman Modal Dan</h2>
+            <h2 className="text-[18px] font-bold uppercase leading-tight">Pelayanan Terpadu Satu Pintu</h2>
+            <p className="text-[11px] mt-3 font-sans font-medium">Jalan Udayana No. 4 Selaparang. Kota Mataram, Nusa Tenggara Barat 83122</p>
+            <p className="text-[11px] font-sans font-medium">Telepon (0370) 631060 - 632632, Faksimile (0370) 6634926</p>
+            <p className="text-[11px] font-sans font-bold text-blue-700 underline">Website: dpmptsp.ntbprov.go.id</p>
           </div>
-          <div className="absolute bottom-[-5px] left-0 w-full border-b-[1px] border-black"></div>
         </div>
+        {/* Double Line Separator */}
+        <div className="border-b-[1px] border-black mb-6"></div>
 
         {/* Tanggal & Nomor */}
-        <div className="flex justify-between mb-6 text-[12px]">
+        <div className="flex justify-between mb-6 text-[13px]">
           <div className="space-y-0.5">
             <p><span className="inline-block w-16">Nomor</span>: 822.3 / {formData.nomorSkpTerakhir?.split('/')[1] || '021'} /DPMPTSP/2026</p>
             <p><span className="inline-block w-16">Lamp.</span>: --</p>
@@ -75,7 +75,7 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
         </div>
 
         {/* Alamat Tujuan */}
-        <div className="mb-6 text-[12px]">
+        <div className="mb-6 text-[13px]">
           <p className="font-bold">Yth. Kepala Badan Pengelola Keuangan</p>
           <p className="font-bold ml-8">dan Aset Daerah Provinsi NTB</p>
           <p className="ml-8 text-sm">di -</p>
@@ -83,10 +83,10 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
         </div>
 
         {/* Isi Surat */}
-        <div className="text-[12px] text-justify space-y-4">
+        <div className="text-[13px] text-justify space-y-4">
           <p>Dengan ini dipermaklumkan bahwa sehubungan dengan telah dipenuhinya masa kerja dan syarat-syarat lainnya kepada :</p>
           
-          <div className="grid grid-cols-[30px_160px_10px_1fr] gap-y-1 ml-4">
+          <div className="grid grid-cols-[30px_170px_10px_1fr] gap-y-1 ml-4">
             <div>1.</div><div>Nama/ Tanggal Lahir</div><div>:</div><div className="font-bold uppercase">{formData.nama} / {formData.tanggalLahir ? formatDate(formData.tanggalLahir).split(' ').join('-') : '-'}</div>
             <div>2.</div><div>NIP</div><div>:</div><div className="font-bold">{formData.nip}</div>
             <div>3.</div><div>Pangkat/ Jabatan</div><div>:</div><div>{formData.golongan} / {formData.jabatan}</div>
@@ -94,7 +94,7 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
             <div>5.</div><div>Gaji Pokok Lama</div><div>:</div><div><span className="font-bold">Rp. {formData.gajiPokokLama || '-'}</span></div>
           </div>
 
-          <p className="ml-10 italic">(Atas dasar SKP Terakhir tentang gaji / pangkat yang telah ditetapkan) :</p>
+          <p className="ml-10 italic font-medium">(Atas dasar SKP Terakhir tentang gaji / pangkat yang telah ditetapkan) :</p>
           
           <div className="grid grid-cols-[60px_130px_10px_1fr] gap-y-0.5 ml-4">
             <div></div><div>a. Oleh Pejabat</div><div>:</div><div className="uppercase">KEPALA DPMPTSP PROVINSI NTB</div>
@@ -106,7 +106,7 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
 
           <p>Diberikan kenaikan gaji berkala hingga memperoleh :</p>
 
-          <div className="grid grid-cols-[30px_160px_10px_1fr] gap-y-1 ml-4">
+          <div className="grid grid-cols-[30px_170px_10px_1fr] gap-y-1 ml-4">
             <div className="font-bold">6.</div><div className="font-bold">Gaji Pokok Baru</div><div className="font-bold">:</div><div className="font-bold">Rp. {formData.gajiPokokBaru || '-'}</div>
             <div>7.</div><div>Berdasarkan Masa Kerja</div><div>:</div><div>{formData.masaKerjaBaru || '-'}</div>
             <div>8.</div><div>Dalam Golongan / Ruang</div><div>:</div><div>{formData.golonganBaru || formData.golongan}</div>
@@ -118,20 +118,21 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
         </div>
 
         {/* Tanda Tangan */}
-        <div className="mt-10 flex justify-end">
-          <div className="text-left w-[300px] text-[12px]">
+        <div className="mt-12 flex justify-end">
+          <div className="text-left w-[320px] text-[13px]">
             <p className="font-bold uppercase italic">a.n. GUBERNUR NUSA TENGGARA BARAT</p>
             <p className="font-bold uppercase ml-8">KEPALA DINAS,</p>
-            <div className="h-16"></div>
+            <div className="h-24"></div>
             <p className="font-bold underline uppercase tracking-tight">H. Irnadi Kusuma, S.STP., ME</p>
+            <p className="font-medium">Pembina Utama Muda (IV/c)</p>
             <p>NIP. 19771231 199703 1 004</p>
           </div>
         </div>
 
         {/* Tembusan */}
-        <div className="mt-8 text-[10px] border-t pt-2">
+        <div className="mt-10 text-[11px] border-t border-slate-200 pt-3">
           <p className="font-bold italic underline mb-1">Tembusan disampaikan kepada Yth. :</p>
-          <ol className="list-decimal ml-6 space-y-0">
+          <ol className="list-decimal ml-6 space-y-0.5">
             <li>Inspektur Inspektorat Provinsi NTB di Mataram;</li>
             <li>Kepala Badan Kepegawaian Daerah Provinsi NTB di Mataram;</li>
             <li>Kepala Badan Keuangan Dan Aset Daerah di Mataram;</li>
