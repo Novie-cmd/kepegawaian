@@ -1,16 +1,17 @@
 
 import React from 'react';
 import { Employee } from '../types';
-import { formatDate } from '../utils/dateUtils';
+import { formatDate, parseDateString } from '../utils/dateUtils';
 
 interface EmployeeTableProps {
   employees: Employee[];
   type?: 'NORMAL' | 'PANGKAT' | 'KGB' | 'PENSIUN';
   onAction?: (emp: Employee) => void;
   onDelete?: (id: string) => void;
+  selectedPeriod?: { month: number; year: number };
 }
 
-const EmployeeTable: React.FC<EmployeeTableProps> = ({ employees, type = 'NORMAL', onAction, onDelete }) => {
+const EmployeeTable: React.FC<EmployeeTableProps> = ({ employees, type = 'NORMAL', onAction, onDelete, selectedPeriod }) => {
   const handleDelete = (e: React.MouseEvent, emp: Employee) => {
     e.stopPropagation();
     if (window.confirm(`PERINGATAN: Apakah Anda yakin ingin menghapus data "${emp.nama}" secara permanen? Tindakan ini tidak dapat dibatalkan.`)) {
@@ -18,6 +19,19 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({ employees, type = 'NORMAL
         onDelete(emp.id);
       }
     }
+  };
+
+  const getDisplayDate = (emp: Employee) => {
+    if (!selectedPeriod) return null;
+    
+    let tmtStr = '';
+    if (type === 'PANGKAT') tmtStr = emp.tmtGolongan;
+    else if (type === 'KGB') tmtStr = emp.tmtKgb;
+    else if (type === 'PENSIUN') return formatDate(new Date(new Date(emp.tanggalLahir).getFullYear() + 58, new Date(emp.tanggalLahir).getMonth() + 1, 1));
+    
+    if (!tmtStr) return '-';
+    const tmt = parseDateString(tmtStr);
+    return formatDate(new Date(selectedPeriod.year, tmt.getMonth(), 1));
   };
 
   return (
@@ -64,7 +78,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({ employees, type = 'NORMAL
                   <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">Terakhir: {formatDate(emp.tmtGolongan)}</div>
                   <div className="text-sm font-black text-orange-600 flex items-center space-x-2">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 11l7-7 7 7M5 19l7-7 7 7"/></svg>
-                    <span>{formatDate(new Date(new Date(emp.tmtGolongan).getFullYear() + 4, new Date(emp.tmtGolongan).getMonth(), 1))}</span>
+                    <span>{getDisplayDate(emp)}</span>
                   </div>
                 </td>
               )}
@@ -74,7 +88,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({ employees, type = 'NORMAL
                   <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">Terakhir: {formatDate(emp.tmtKgb)}</div>
                   <div className="text-sm font-black text-emerald-600 flex items-center space-x-2">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1"/></svg>
-                    <span>{formatDate(new Date(new Date(emp.tmtKgb).getFullYear() + 2, new Date(emp.tmtKgb).getMonth(), 1))}</span>
+                    <span>{getDisplayDate(emp)}</span>
                   </div>
                 </td>
               )}
@@ -84,7 +98,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({ employees, type = 'NORMAL
                   <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">Lahir: {formatDate(emp.tanggalLahir)}</div>
                   <div className="text-sm font-black text-rose-600 flex items-center space-x-2">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 14l9-5-9-5-9 5 9 5z"/></svg>
-                    <span>{formatDate(new Date(new Date(emp.tanggalLahir).getFullYear() + 58, new Date(emp.tanggalLahir).getMonth() + 1, 1))}</span>
+                    <span>{getDisplayDate(emp)}</span>
                   </div>
                 </td>
               )}

@@ -6,7 +6,7 @@ import StatCard from './components/StatCard';
 import EmployeeTable from './components/EmployeeTable';
 import EmployeeModal from './components/EmployeeModal';
 import LoginView from './components/LoginView';
-import { getNextPromotion, getNextKgb, getRetirementDate, isNear } from './utils/dateUtils';
+import { getNextPromotion, getNextKgb, getRetirementDate, isNear, isDueInPeriod, isDueSoon, parseDateString } from './utils/dateUtils';
 import { getAIAnalysis } from './services/geminiService';
 import { supabase, isSupabaseConfigured } from './services/supabaseClient';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
@@ -161,8 +161,8 @@ const App: React.FC = () => {
 
   const stats = [
     { label: 'Total Pegawai', value: employees.length, color: 'bg-blue-100 text-blue-600', icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg> },
-    { label: 'Usul Pangkat', value: employees.filter(e => isNear(getNextPromotion(e.tmtGolongan))).length, color: 'bg-orange-100 text-orange-600', icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg> },
-    { label: 'Usul KGB', value: employees.filter(e => isNear(getNextKgb(e.tmtKgb))).length, color: 'bg-emerald-100 text-emerald-600', icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1"/></svg> },
+    { label: 'Usul Pangkat', value: employees.filter(e => isDueSoon(e.tmtGolongan, 4)).length, color: 'bg-orange-100 text-orange-600', icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg> },
+    { label: 'Usul KGB', value: employees.filter(e => isDueSoon(e.tmtKgb, 2)).length, color: 'bg-emerald-100 text-emerald-600', icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1"/></svg> },
     { label: 'Pensiun', value: employees.filter(e => isNear(getRetirementDate(e.tanggalLahir))).length, color: 'bg-red-100 text-red-600', icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l9-5-9-5-9 5 9 5z"/></svg> },
   ];
 
@@ -174,20 +174,26 @@ const App: React.FC = () => {
     return Object.entries(groups).map(([name, value]) => ({ name, value }));
   }, [employees]);
 
-  // Combined filtering logic for monitoring
+  // Logika filter gabungan untuk monitoring yang diperbaiki
   const monitoringData = useMemo(() => {
     return employees.filter(e => {
-      let targetDate: Date;
-      if (currentView === 'KONTROL_PANGKAT') targetDate = getNextPromotion(e.tmtGolongan);
-      else if (currentView === 'KONTROL_KGB') targetDate = getNextKgb(e.tmtKgb);
-      else if (currentView === 'KONTROL_PENSIUN') targetDate = getRetirementDate(e.tanggalLahir);
-      else return true;
-
-      const matchesMonth = targetDate.getMonth() === filterMonth;
-      const matchesYear = targetDate.getFullYear() === filterYear;
       const matchesSearch = e.nama.toLowerCase().includes(searchQuery.toLowerCase()) || e.nip.includes(searchQuery);
+      if (!matchesSearch) return false;
 
-      return matchesMonth && matchesYear && matchesSearch;
+      if (currentView === 'KONTROL_PANGKAT') {
+        return isDueInPeriod(e.tmtGolongan, filterMonth, filterYear, 4);
+      }
+      
+      if (currentView === 'KONTROL_KGB') {
+        return isDueInPeriod(e.tmtKgb, filterMonth, filterYear, 2);
+      }
+      
+      if (currentView === 'KONTROL_PENSIUN') {
+        const pensionDate = getRetirementDate(e.tanggalLahir);
+        return pensionDate.getMonth() === filterMonth && pensionDate.getFullYear() === filterYear;
+      }
+      
+      return true;
     });
   }, [employees, currentView, filterMonth, filterYear, searchQuery]);
 
@@ -318,6 +324,7 @@ const App: React.FC = () => {
                   onAction={(e) => { setSelectedEmployee(e); setIsModalOpen(true); }} 
                   onDelete={handleDeleteEmployee}
                   type={currentView === 'KONTROL_PANGKAT' ? 'PANGKAT' : currentView === 'KONTROL_KGB' ? 'KGB' : 'PENSIUN'} 
+                  selectedPeriod={{ month: filterMonth, year: filterYear }}
                 />
 
                 {monitoringData.length === 0 && (
