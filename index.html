@@ -33,6 +33,34 @@
             to { transform: translateX(0); opacity: 1; }
         }
         .animate-slideInRight { animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+
+        /* Aturan Khusus Cetak Surat */
+        @media print {
+            /* Sembunyikan semua elemen kecuali area surat */
+            body * {
+                visibility: hidden;
+            }
+            #print-area, #print-area * {
+                visibility: visible;
+            }
+            #print-area {
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                background: white !important;
+            }
+            /* Hilangkan dekorasi tombol saat cetak */
+            .no-print {
+                display: none !important;
+            }
+            /* Hilangkan margin default browser */
+            @page {
+                margin: 1cm;
+            }
+        }
     </style>
 <script type="importmap">
 {

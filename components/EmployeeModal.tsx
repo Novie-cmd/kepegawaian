@@ -19,11 +19,11 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
   };
 
   return (
-    <div className="absolute inset-0 z-50 bg-slate-900/40 p-0 md:p-8 overflow-y-auto animate-fadeIn backdrop-blur-md print:bg-white print:p-0 print:overflow-visible">
-      <div className="max-w-[850px] mx-auto bg-white shadow-2xl p-12 md:p-20 text-black font-serif relative leading-normal print:shadow-none print:max-w-none print:w-full print:p-0">
+    <div id="print-area" className="fixed inset-0 z-[100] bg-slate-900/60 p-4 md:p-8 overflow-y-auto animate-fadeIn backdrop-blur-sm print:bg-white print:p-0 print:overflow-visible">
+      <div className="max-w-[850px] mx-auto bg-white shadow-2xl p-10 md:p-16 text-black font-serif relative leading-normal print:shadow-none print:max-w-none print:w-full print:p-0">
         
-        {/* Floating Action Buttons */}
-        <div className="absolute top-4 right-4 flex space-x-3 print:hidden">
+        {/* Floating Action Buttons - Hidden on Print */}
+        <div className="absolute top-4 right-4 flex space-x-3 no-print">
           <button 
             onClick={handlePrint}
             className="flex items-center space-x-2 px-6 py-2.5 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 transition-all shadow-lg font-bold text-xs uppercase tracking-widest"
@@ -39,32 +39,30 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
           </button>
         </div>
 
-        {/* Kop Surat Sesuai NTB */}
-        <div className="flex items-center border-b-[3px] border-black pb-4 mb-6 relative print:mt-10">
+        {/* Kop Surat */}
+        <div className="flex items-center border-b-[3px] border-black pb-4 mb-6 relative print:mt-4">
           <div className="w-24 flex-shrink-0 flex justify-center items-center">
              <img 
                src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Coat_of_arms_of_West_Nusa_Tenggara.png/300px-Coat_of_arms_of_West_Nusa_Tenggara.png" 
                alt="Logo Provinsi NTB" 
-               className="h-28 w-auto object-contain block"
+               className="h-24 w-auto object-contain block"
                onError={(e) => {
                  (e.target as HTMLImageElement).src = "https://via.placeholder.com/100x120?text=LOGO+NTB";
                }}
              />
           </div>
           <div className="flex-1 text-center pr-10">
-            <h1 className="text-[20px] font-bold uppercase tracking-wide leading-tight">Pemerintah Provinsi Nusa Tenggara Barat</h1>
-            <h2 className="text-[18px] font-bold uppercase leading-tight">Dinas Penanaman Modal Dan</h2>
-            <h2 className="text-[18px] font-bold uppercase leading-tight">Pelayanan Terpadu Satu Pintu</h2>
-            <p className="text-[11px] mt-2 font-sans">Jalan Udayana No. 4 Selaparang. Kota Mataram, Nusa Tenggara Barat 83122,</p>
-            <p className="text-[11px] font-sans">Telepon (0370) 631060 - 632632, Faksimile (0370) 6634926</p>
-            <p className="text-[10px] italic font-sans text-gray-700">Email: dpmptsp@ntbprov.go.id website: www.investasi-perizinan.ntbprov.go.id</p>
+            <h1 className="text-[18px] font-bold uppercase tracking-wide leading-tight">Pemerintah Provinsi Nusa Tenggara Barat</h1>
+            <h2 className="text-[16px] font-bold uppercase leading-tight">Dinas Penanaman Modal Dan</h2>
+            <h2 className="text-[16px] font-bold uppercase leading-tight">Pelayanan Terpadu Satu Pintu</h2>
+            <p className="text-[10px] mt-2 font-sans">Jalan Udayana No. 4 Selaparang. Kota Mataram, Nusa Tenggara Barat 83122,</p>
+            <p className="text-[10px] font-sans">Telepon (0370) 631060 - 632632, Faksimile (0370) 6634926</p>
           </div>
-          {/* Garis Ganda Kop Surat */}
           <div className="absolute bottom-[-5px] left-0 w-full border-b-[1px] border-black"></div>
         </div>
 
         {/* Tanggal & Nomor */}
-        <div className="flex justify-between mb-6 text-[13px]">
+        <div className="flex justify-between mb-6 text-[12px]">
           <div className="space-y-0.5">
             <p><span className="inline-block w-16">Nomor</span>: 822.3 / {formData.nomorSkpTerakhir?.split('/')[1] || '021'} /DPMPTSP/2026</p>
             <p><span className="inline-block w-16">Lamp.</span>: --</p>
@@ -77,15 +75,15 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
         </div>
 
         {/* Alamat Tujuan */}
-        <div className="mb-6 text-[13px]">
+        <div className="mb-6 text-[12px]">
           <p className="font-bold">Yth. Kepala Badan Pengelola Keuangan</p>
           <p className="font-bold ml-8">dan Aset Daerah Provinsi NTB</p>
           <p className="ml-8 text-sm">di -</p>
           <p className="ml-14 font-bold">Mataram</p>
         </div>
 
-        {/* Isi Surat Body */}
-        <div className="text-[13px] text-justify space-y-4">
+        {/* Isi Surat */}
+        <div className="text-[12px] text-justify space-y-4">
           <p>Dengan ini dipermaklumkan bahwa sehubungan dengan telah dipenuhinya masa kerja dan syarat-syarat lainnya kepada :</p>
           
           <div className="grid grid-cols-[30px_160px_10px_1fr] gap-y-1 ml-4">
@@ -120,25 +118,23 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
         </div>
 
         {/* Tanda Tangan */}
-        <div className="mt-12 flex justify-end">
-          <div className="text-left w-[320px] text-[13px]">
+        <div className="mt-10 flex justify-end">
+          <div className="text-left w-[300px] text-[12px]">
             <p className="font-bold uppercase italic">a.n. GUBERNUR NUSA TENGGARA BARAT</p>
             <p className="font-bold uppercase ml-8">KEPALA DINAS,</p>
-            <div className="h-20"></div>
+            <div className="h-16"></div>
             <p className="font-bold underline uppercase tracking-tight">H. Irnadi Kusuma, S.STP., ME</p>
             <p>NIP. 19771231 199703 1 004</p>
           </div>
         </div>
 
         {/* Tembusan */}
-        <div className="mt-12 text-[11px] border-t pt-4">
+        <div className="mt-8 text-[10px] border-t pt-2">
           <p className="font-bold italic underline mb-1">Tembusan disampaikan kepada Yth. :</p>
           <ol className="list-decimal ml-6 space-y-0">
             <li>Inspektur Inspektorat Provinsi NTB di Mataram;</li>
             <li>Kepala Badan Kepegawaian Daerah Provinsi NTB di Mataram;</li>
             <li>Kepala Badan Keuangan Dan Aset Daerah di Mataram;</li>
-            <li>Kepala TASPEN (PERSERO) Cabang Mataram di Mataram;</li>
-            <li>Pembuat Daftar Gaji pada DPMPTSP Provinsi NTB di Mataram;</li>
             <li>PNS yang bersangkutan;</li>
             <li>Arsip.</li>
           </ol>
@@ -263,10 +259,10 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, 
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-fadeIn print:hidden">
       <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[95vh] border border-slate-100 relative">
         
-        {/* Letter Preview Overlay */}
+        {/* Letter Preview Overlay - Moved to sibling position for better isolation */}
         {showPreview && <LetterPreview formData={formData} setShowPreview={setShowPreview} />}
 
-        {/* Header Section - Compact */}
+        {/* Header Section */}
         <div className="px-8 py-5 border-b border-slate-100 flex justify-between items-center bg-white relative z-10">
           <div className="flex items-center space-x-4">
             <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-100 overflow-hidden">
