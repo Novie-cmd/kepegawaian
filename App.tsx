@@ -78,7 +78,7 @@ const App: React.FC = () => {
   };
 
   const handleSaveEmployee = async (emp: Employee) => {
-    // Mapping payload harus sesuai persis dengan kolom di Database (case-sensitive)
+    // Pastikan nilai-nilai opsional dikirim sebagai null jika kosong
     const payload = {
       id: emp.id,
       nip: emp.nip || '',
@@ -105,38 +105,34 @@ const App: React.FC = () => {
 
     if (isSupabaseConfigured && supabase) {
       try {
-        let error;
+        let result;
         if (selectedEmployee) {
-          const result = await supabase.from('employees').update(payload).eq('id', emp.id);
-          error = result.error;
+          result = await supabase.from('employees').update(payload).eq('id', emp.id);
         } else {
-          const result = await supabase.from('employees').insert([payload]);
-          error = result.error;
+          result = await supabase.from('employees').insert([payload]);
         }
 
-        if (error) throw error;
+        if (result.error) throw result.error;
 
-        // Refresh data lokal setelah simpan berhasil
         await fetchEmployees();
         setToast({ message: 'Berhasil sinkronisasi dengan Cloud!', type: 'success' });
       } catch (err: any) {
-        console.error("Database Save Error:", err);
-        let errorMsg = err.message;
-        if (errorMsg.includes('column') || errorMsg.includes('find')) {
-          errorMsg = "Database belum siap. Pastikan sudah menjalankan SQL Fix di Supabase Dashboard.";
-        }
-        setToast({ message: 'Gagal: ' + errorMsg, type: 'error' });
+        console.error("Supabase Save Error Details:", err);
+        // Tampilkan pesan error teknis agar user tahu kolom mana yang kurang
+        setToast({ 
+          message: `Error DB: ${err.message || 'Cek koneksi'}. Pastikan sudah menjalankan Master SQL di Supabase.`, 
+          type: 'error' 
+        });
       }
     } else {
-      // Logic untuk mode demo/lokal
       if (selectedEmployee) {
         setEmployees(prev => prev.map(e => e.id === emp.id ? emp : e));
       } else {
         setEmployees(prev => [emp, ...prev]);
       }
-      setToast({ message: 'Tersimpan (Mode Demo)', type: 'info' });
+      setToast({ message: 'Tersimpan (Mode Demo/Lokal)', type: 'info' });
     }
-    setTimeout(() => setToast(null), 5000);
+    setTimeout(() => setToast(null), 7000);
   };
 
   const handleDeleteEmployee = async (id: string) => {
