@@ -11,6 +11,11 @@ import { getAIAnalysis } from './services/geminiService';
 import { supabase, isSupabaseConfigured } from './services/supabaseClient';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
+const MONTHS = [
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+];
+
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [currentView, setCurrentView] = useState<ViewType>('DASHBOARD');
@@ -22,6 +27,10 @@ const App: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'info' | 'error' } | null>(null);
+  
+  // States for Date Filtering
+  const [filterMonth, setFilterMonth] = useState<number>(new Date().getMonth());
+  const [filterYear, setFilterYear] = useState<number>(new Date().getFullYear());
 
   useEffect(() => {
     const session = sessionStorage.getItem('hr_pro_auth');
@@ -78,7 +87,6 @@ const App: React.FC = () => {
   };
 
   const handleSaveEmployee = async (emp: Employee) => {
-    // Pastikan nilai-nilai opsional dikirim sebagai null jika kosong
     const payload = {
       id: emp.id,
       nip: emp.nip || '',
@@ -117,10 +125,8 @@ const App: React.FC = () => {
         await fetchEmployees();
         setToast({ message: 'Berhasil sinkronisasi dengan Cloud!', type: 'success' });
       } catch (err: any) {
-        console.error("Supabase Save Error Details:", err);
-        // Tampilkan pesan error teknis agar user tahu kolom mana yang kurang
         setToast({ 
-          message: `Error DB: ${err.message || 'Cek koneksi'}. Pastikan sudah menjalankan Master SQL di Supabase.`, 
+          message: `Error DB: ${err.message || 'Cek koneksi'}.`, 
           type: 'error' 
         });
       }
@@ -132,7 +138,7 @@ const App: React.FC = () => {
       }
       setToast({ message: 'Tersimpan (Mode Demo/Lokal)', type: 'info' });
     }
-    setTimeout(() => setToast(null), 7000);
+    setTimeout(() => setToast(null), 5000);
   };
 
   const handleDeleteEmployee = async (id: string) => {
@@ -179,6 +185,32 @@ const App: React.FC = () => {
     }, {} as Record<string, number>);
     return Object.entries(groups).map(([name, value]) => ({ name, value }));
   }, [employees]);
+
+  // Logic for filtered monitoring tables based on Month and Year
+  const monitoringData = useMemo(() => {
+    return employees.filter(e => {
+      let targetDate: Date;
+      if (currentView === 'KONTROL_PANGKAT') targetDate = getNextPromotion(e.tmtGolongan);
+      else if (currentView === 'KONTROL_KGB') targetDate = getNextKgb(e.tmtKgb);
+      else if (currentView === 'KONTROL_PENSIUN') targetDate = getRetirementDate(e.tanggalLahir);
+      else return true;
+
+      const matchesMonth = targetDate.getMonth() === filterMonth;
+      const matchesYear = targetDate.getFullYear() === filterYear;
+      const matchesSearch = e.nama.toLowerCase().includes(searchQuery.toLowerCase()) || e.nip.includes(searchQuery);
+
+      return matchesMonth && matchesYear && matchesSearch;
+    });
+  }, [employees, currentView, filterMonth, filterYear, searchQuery]);
+
+  const yearOptions = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let i = currentYear - 5; i <= currentYear + 10; i++) {
+      years.push(i);
+    }
+    return years;
+  }, []);
 
   if (!isAuthenticated) {
     return <LoginView onLogin={handleLogin} />;
@@ -299,22 +331,52 @@ const App: React.FC = () => {
 
               {(currentView === 'KONTROL_PANGKAT' || currentView === 'KONTROL_KGB' || currentView === 'KONTROL_PENSIUN') && (
                 <div className="space-y-10">
-                   <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-wrap items-center gap-6">
+                   <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col md:flex-row items-center gap-6">
                     <div className="flex-1">
                       <h2 className="text-2xl font-black text-slate-900 tracking-tight">Monitoring {currentView === 'KONTROL_PANGKAT' ? 'Kenaikan Pangkat' : currentView === 'KONTROL_KGB' ? 'Kenaikan Gaji Berkala' : 'Pensiun'}</h2>
-                      <p className="text-xs text-slate-400 font-bold uppercase mt-1">Data sinkron otomatis dengan Database Cloud</p>
+                      <p className="text-xs text-slate-400 font-bold uppercase mt-1">Gunakan filter untuk memantau periode tertentu</p>
+                    </div>
+                    
+                    {/* Period Filters */}
+                    <div className="flex items-center space-x-4 bg-slate-50 p-2 rounded-3xl border border-slate-100 shadow-inner">
+                      <div className="flex items-center space-x-2 px-4">
+                        <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        <select 
+                          value={filterMonth} 
+                          onChange={(e) => setFilterMonth(parseInt(e.target.value))}
+                          className="bg-transparent border-none font-black text-[10px] uppercase tracking-widest text-slate-700 outline-none cursor-pointer focus:ring-0"
+                        >
+                          {MONTHS.map((m, idx) => <option key={m} value={idx}>{m}</option>)}
+                        </select>
+                      </div>
+                      <div className="w-px h-6 bg-slate-200"></div>
+                      <div className="px-4">
+                        <select 
+                          value={filterYear} 
+                          onChange={(e) => setFilterYear(parseInt(e.target.value))}
+                          className="bg-transparent border-none font-black text-[10px] uppercase tracking-widest text-slate-700 outline-none cursor-pointer focus:ring-0"
+                        >
+                          {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
+                        </select>
+                      </div>
                     </div>
                   </div>
+
                   <EmployeeTable 
-                    employees={employees.filter(e => {
-                      if (currentView === 'KONTROL_PANGKAT') return isNear(getNextPromotion(e.tmtGolongan));
-                      if (currentView === 'KONTROL_KGB') return isNear(getNextKgb(e.tmtKgb));
-                      return isNear(getRetirementDate(e.tanggalLahir));
-                    })} 
+                    employees={monitoringData} 
                     onAction={(e) => { setSelectedEmployee(e); setIsModalOpen(true); }} 
                     onDelete={handleDeleteEmployee}
                     type={currentView === 'KONTROL_PANGKAT' ? 'PANGKAT' : currentView === 'KONTROL_KGB' ? 'KGB' : 'PENSIUN'} 
                   />
+                  
+                  {monitoringData.length === 0 && (
+                    <div className="bg-white/50 border-2 border-dashed border-slate-200 rounded-[2.5rem] p-20 text-center space-y-4">
+                       <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-300">
+                          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+                       </div>
+                       <p className="text-sm font-black text-slate-400 uppercase tracking-widest">Tidak ada pegawai yang jatuh tempo pada {MONTHS[filterMonth]} {filterYear}</p>
+                    </div>
+                  )}
                 </div>
               )}
 
