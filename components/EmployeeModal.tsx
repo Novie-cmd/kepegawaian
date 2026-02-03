@@ -18,12 +18,10 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
     window.print();
   };
 
-  // Daftar URL Logo NTB dari berbagai sumber untuk redundansi
-  const logoSources = [
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Coat_of_arms_of_West_Nusa_Tenggara.png/240px-Coat_of_arms_of_West_Nusa_Tenggara.png",
-    "https://ntbprov.go.id/uploads/logo/logo_ntb.png",
-    "https://lh3.googleusercontent.com/proxy/reliable_public_ntb_logo_link" // Placeholder jika link utama mati
-  ];
+  // URL Logo NTB dengan prioritas stabilitas
+  const primaryLogo = "https://upload.wikimedia.org/wikipedia/commons/0/07/Coat_of_arms_of_West_Nusa_Tenggara.png";
+  const secondaryLogo = "https://ntbprov.go.id/uploads/logo/logo_ntb.png";
+  const tertiaryLogo = "https://www.ntbprov.go.id/img/logo-ntb.png";
 
   return (
     <div id="print-area" className="fixed inset-0 z-[100] bg-slate-900/60 p-4 md:p-8 overflow-y-auto animate-fadeIn backdrop-blur-sm print:bg-white print:p-0 print:overflow-visible">
@@ -47,22 +45,20 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
         </div>
 
         {/* Kop Surat Resmi */}
-        <div className="flex items-center border-b-[3px] border-black pb-1 mb-1 relative print:mt-2">
-          <div className="w-28 flex-shrink-0 flex justify-center items-center py-2">
+        <div className="flex items-center border-b-[3px] border-black pb-1 mb-1 relative print:mt-2 min-h-[140px]">
+          <div className="w-28 flex-shrink-0 flex justify-center items-center py-2 h-28">
              <img 
-               src={logoSources[0]} 
-               alt="Lambang Provinsi NTB" 
+               src={primaryLogo} 
+               alt="Logo Pemerintah Provinsi NTB" 
                className="h-28 w-auto object-contain block"
                referrerPolicy="no-referrer"
-               style={{ minWidth: '85px' }}
+               crossOrigin="anonymous"
                onError={(e) => {
                  const target = e.target as HTMLImageElement;
-                 // Coba sumber cadangan secara berurutan
-                 if (target.src === logoSources[0]) {
-                   target.src = logoSources[1];
-                 } else if (target.src === logoSources[1]) {
-                   // Jika semua gagal, gunakan placeholder yang elegan
-                   target.src = "https://via.placeholder.com/150x180?text=LOGO+NTB";
+                 if (target.src === primaryLogo) {
+                   target.src = secondaryLogo;
+                 } else if (target.src === secondaryLogo) {
+                   target.src = tertiaryLogo;
                  }
                }}
              />
