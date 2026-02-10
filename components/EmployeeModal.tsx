@@ -41,16 +41,16 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
           </button>
         </div>
 
-        <div className="flex items-center border-b-[3px] border-black pb-1 mb-1 relative print:mt-2 min-h-[140px]">
-          <div className="w-28 flex-shrink-0 flex justify-center items-center py-2 h-28 mr-4">
-             <img src={ntbLogoUrl} alt="Logo Instansi" className="h-24 w-auto object-contain block" crossOrigin="anonymous" />
+        <div className="flex items-center border-b-[3px] border-black pb-2 mb-1 relative print:mt-2 min-h-[150px]">
+          <div className="w-36 flex-shrink-0 flex justify-center items-center mr-6">
+             <img src={ntbLogoUrl} alt="Logo Instansi" className="h-32 w-auto object-contain block" crossOrigin="anonymous" />
           </div>
-          <div className="flex-1 text-center pr-12">
-            <h1 className="text-[19px] font-bold uppercase tracking-tight leading-tight">Pemerintah Provinsi Nusa Tenggara Barat</h1>
-            <h2 className="text-[17px] font-bold uppercase leading-tight mt-1">Dinas Penanaman Modal Dan</h2>
-            <h2 className="text-[17px] font-bold uppercase leading-tight">Pelayanan Terpadu Satu Pintu</h2>
-            <p className="text-[10px] mt-2 font-sans font-medium">Jalan Udayana No. 4 Selaparang. Kota Mataram, Nusa Tenggara Barat 83122</p>
-            <p className="text-[10px] font-sans font-medium">Telepon (0370) 631060 - 632632, Faksimile (0370) 6634926</p>
+          <div className="flex-1 text-center pr-10">
+            <h1 className="text-[20px] font-bold uppercase tracking-tight leading-tight">Pemerintah Provinsi Nusa Tenggara Barat</h1>
+            <h2 className="text-[18px] font-bold uppercase leading-tight mt-1">Dinas Penanaman Modal Dan</h2>
+            <h2 className="text-[18px] font-bold uppercase leading-tight">Pelayanan Terpadu Satu Pintu</h2>
+            <p className="text-[11px] mt-2 font-sans font-medium">Jalan Udayana No. 4 Selaparang. Kota Mataram, Nusa Tenggara Barat 83122</p>
+            <p className="text-[11px] font-sans font-medium">Telepon (0370) 631060 - 632632, Faksimile (0370) 6634926</p>
           </div>
         </div>
         <div className="border-b-[1px] border-black mb-6"></div>
