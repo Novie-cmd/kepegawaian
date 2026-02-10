@@ -11,14 +11,15 @@ interface EmployeeModalProps {
   onSave: (employee: Employee) => void;
   onDelete?: (id: string) => void;
   initialData?: Employee | null;
+  deptLogo?: string;
 }
 
-const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (show: boolean) => void }> = ({ formData, setShowPreview }) => {
+const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (show: boolean) => void, deptLogo?: string }> = ({ formData, setShowPreview, deptLogo }) => {
   const handlePrint = () => {
     window.print();
   };
 
-  const ntbLogoUrl = "https://upload.wikimedia.org/wikipedia/commons/0/07/Coat_of_arms_of_West_Nusa_Tenggara.png";
+  const ntbLogoUrl = deptLogo || "https://upload.wikimedia.org/wikipedia/commons/0/07/Coat_of_arms_of_West_Nusa_Tenggara.png";
 
   return (
     <div id="print-area" className="fixed inset-0 z-[100] bg-slate-900/60 p-4 md:p-8 overflow-y-auto animate-fadeIn backdrop-blur-sm print:bg-white print:p-0 print:overflow-visible">
@@ -42,7 +43,7 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
 
         <div className="flex items-center border-b-[3px] border-black pb-1 mb-1 relative print:mt-2 min-h-[140px]">
           <div className="w-28 flex-shrink-0 flex justify-center items-center py-2 h-28 mr-4">
-             <img src={ntbLogoUrl} alt="Logo NTB" className="h-24 w-auto object-contain block" crossOrigin="anonymous" />
+             <img src={ntbLogoUrl} alt="Logo Instansi" className="h-24 w-auto object-contain block" crossOrigin="anonymous" />
           </div>
           <div className="flex-1 text-center pr-12">
             <h1 className="text-[19px] font-bold uppercase tracking-tight leading-tight">Pemerintah Provinsi Nusa Tenggara Barat</h1>
@@ -119,7 +120,7 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
   );
 };
 
-const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, onDelete, initialData }) => {
+const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, onDelete, initialData, deptLogo }) => {
   const [activeTab, setActiveTab] = useState<'DATA' | 'SKP_LAMA' | 'SKP_BARU'>('DATA');
   const [isScanning, setIsScanning] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -220,7 +221,7 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, 
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-fadeIn">
       <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[95vh] border border-slate-100">
         
-        {showPreview && <LetterPreview formData={formData} setShowPreview={setShowPreview} />}
+        {showPreview && <LetterPreview formData={formData} setShowPreview={setShowPreview} deptLogo={deptLogo} />}
 
         <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-white">
           <div className="flex items-center space-x-4">

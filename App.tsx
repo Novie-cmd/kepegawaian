@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { ViewType, Employee } from './types';
 import { NAV_ITEMS, MOCK_EMPLOYEES } from './constants';
 import StatCard from './components/StatCard';
@@ -16,6 +16,8 @@ const MONTHS = [
   'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
 ];
 
+const DEFAULT_LOGO = "https://upload.wikimedia.org/wikipedia/commons/0/07/Coat_of_arms_of_West_Nusa_Tenggara.png";
+
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [currentView, setCurrentView] = useState<ViewType>('DASHBOARD');
@@ -27,7 +29,10 @@ const App: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'info' | 'error' } | null>(null);
+  const [deptLogo, setDeptLogo] = useState<string>(DEFAULT_LOGO);
   
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
   // Filter States
   const [filterMonth, setFilterMonth] = useState<number>(new Date().getMonth());
   const [filterYear, setFilterYear] = useState<number>(new Date().getFullYear());
@@ -36,6 +41,12 @@ const App: React.FC = () => {
     const session = sessionStorage.getItem('hr_pro_auth');
     if (session === 'true') {
       setIsAuthenticated(true);
+    }
+    
+    // Load saved logo
+    const savedLogo = localStorage.getItem('dept_logo_base64');
+    if (savedLogo) {
+      setDeptLogo(savedLogo);
     }
   }, []);
 
@@ -55,6 +66,21 @@ const App: React.FC = () => {
   const handleLogout = () => {
     setIsAuthenticated(false);
     sessionStorage.removeItem('hr_pro_auth');
+  };
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result as string;
+      setDeptLogo(base64);
+      localStorage.setItem('dept_logo_base64', base64);
+      setToast({ message: 'Logo instansi diperbarui!', type: 'success' });
+      setTimeout(() => setToast(null), 3000);
+    };
+    reader.readAsDataURL(file);
   };
 
   const loadInitialData = async () => {
@@ -285,10 +311,26 @@ const App: React.FC = () => {
               <div className="space-y-8">
                 <div className="flex justify-between items-center">
                   <h2 className="text-2xl font-black text-slate-900 tracking-tight">Daftar Pegawai</h2>
-                  <button onClick={() => { setSelectedEmployee(null); setIsModalOpen(true); }} className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-indigo-700 transition-all flex items-center space-x-3">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                    <span>Pegawai Baru</span>
-                  </button>
+                  <div className="flex items-center space-x-3">
+                    <input 
+                      type="file" 
+                      ref={logoInputRef} 
+                      onChange={handleLogoUpload} 
+                      className="hidden" 
+                      accept=".ico,.png,.jpg,.jpeg" 
+                    />
+                    <button 
+                      onClick={() => logoInputRef.current?.click()} 
+                      className="bg-white border border-slate-200 text-slate-600 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center space-x-3 shadow-sm"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                      <span>Set Logo (.ico)</span>
+                    </button>
+                    <button onClick={() => { setSelectedEmployee(null); setIsModalOpen(true); }} className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-indigo-700 transition-all flex items-center space-x-3">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                      <span>Pegawai Baru</span>
+                    </button>
+                  </div>
                 </div>
                 <EmployeeTable employees={filteredEmployees} onAction={(e) => { setSelectedEmployee(e); setIsModalOpen(true); }} onDelete={handleDeleteEmployee} type="NORMAL" />
               </div>
@@ -355,7 +397,14 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      <EmployeeModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setSelectedEmployee(null); }} onSave={handleSaveEmployee} initialData={selectedEmployee} onDelete={handleDeleteEmployee} />
+      <EmployeeModal 
+        isOpen={isModalOpen} 
+        onClose={() => { setIsModalOpen(false); setSelectedEmployee(null); }} 
+        onSave={handleSaveEmployee} 
+        initialData={selectedEmployee} 
+        onDelete={handleDeleteEmployee} 
+        deptLogo={deptLogo}
+      />
     </div>
   );
 };
