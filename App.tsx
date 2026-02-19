@@ -85,6 +85,8 @@ const App: React.FC = () => {
 
   const loadInitialData = async () => {
     setIsLoadingData(true);
+    
+    // Coba koneksi ke Supabase jika konfigurasi tersedia
     if (isSupabaseConfigured && supabase) {
       try {
         const { data, error } = await supabase
@@ -92,21 +94,29 @@ const App: React.FC = () => {
           .select('*')
           .order('nama', { ascending: true });
 
-        if (error) throw error;
+        if (error) {
+          // Jika error karena tabel belum ada atau masalah izin
+          console.warn("Koneksi Supabase gagal (Tabel mungkin belum dibuat):", error.message);
+          throw error;
+        }
         
         setEmployees(data || []);
         setDbMode('CLOUD');
+        setToast({ message: 'Terhubung ke Database Cloud', type: 'success' });
       } catch (err: any) {
-        console.warn("Cloud access failed, falling back to local:", err.message);
+        // Fallback otomatis ke data Lokal/Simulasi
+        console.log("Menggunakan Data Simulasi Lokal...");
         setEmployees(MOCK_EMPLOYEES);
         setDbMode('LOCAL');
-        // Tidak menunjukkan error toast yang mengganggu jika fallback berhasil
       }
     } else {
+      // Tanpa konfigurasi Supabase, langsung ke Mode Lokal
       setEmployees(MOCK_EMPLOYEES);
       setDbMode('LOCAL');
     }
+    
     setIsLoadingData(false);
+    setTimeout(() => setToast(null), 3000);
   };
 
   const fetchEmployees = async () => {
@@ -120,8 +130,7 @@ const App: React.FC = () => {
       if (error) throw error;
       setEmployees(data || []);
     } catch (err: any) {
-      setToast({ message: 'Gagal sinkronisasi awan', type: 'error' });
-      setTimeout(() => setToast(null), 3000);
+      console.error("Sinkronisasi gagal:", err.message);
     }
   };
 
@@ -140,17 +149,18 @@ const App: React.FC = () => {
         
         if (result.error) throw result.error;
         await fetchEmployees();
-        setToast({ message: 'Berhasil sinkronisasi cloud!', type: 'success' });
+        setToast({ message: 'Berhasil disimpan ke cloud!', type: 'success' });
       } catch (err: any) {
-        setToast({ message: 'Error DB: ' + err.message, type: 'error' });
+        setToast({ message: 'Gagal simpan ke cloud: ' + err.message, type: 'error' });
       }
     } else {
+      // Penyimpanan di memori (volatile) jika mode lokal
       if (selectedEmployee) {
         setEmployees(prev => prev.map(e => e.id === emp.id ? emp : e));
       } else {
         setEmployees(prev => [emp, ...prev]);
       }
-      setToast({ message: 'Tersimpan di memori lokal', type: 'info' });
+      setToast({ message: 'Data disimpan di memori lokal', type: 'info' });
     }
     setTimeout(() => setToast(null), 3000);
   };
@@ -235,7 +245,7 @@ const App: React.FC = () => {
         <div className="px-8 py-4">
            <div className={`flex items-center space-x-2 px-4 py-2 rounded-xl border text-[9px] font-black uppercase tracking-widest ${dbMode === 'CLOUD' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-orange-500/10 border-orange-500/20 text-orange-400'}`}>
               <div className={`w-2 h-2 rounded-full ${dbMode === 'CLOUD' ? 'bg-emerald-500 animate-pulse' : 'bg-orange-500'}`}></div>
-              <span>Database: {dbMode} Mode</span>
+              <span>Status: {dbMode === 'CLOUD' ? 'Terhubung Awan' : 'Mode Offline'}</span>
            </div>
         </div>
 
@@ -257,7 +267,7 @@ const App: React.FC = () => {
       <main className="flex-1 flex flex-col overflow-hidden">
         {toast && (
           <div className="fixed top-24 right-8 z-50 animate-slideInRight">
-            <div className={`px-8 py-4 rounded-2xl shadow-2xl border ${toast.type === 'success' ? 'bg-emerald-50 border-emerald-100 text-emerald-800' : 'bg-blue-50 border-blue-100 text-blue-800'}`}>
+            <div className={`px-8 py-4 rounded-2xl shadow-2xl border ${toast.type === 'success' ? 'bg-emerald-50 border-emerald-100 text-emerald-800' : toast.type === 'error' ? 'bg-rose-50 border-rose-100 text-rose-800' : 'bg-blue-50 border-blue-100 text-blue-800'}`}>
               <p className="font-black text-xs uppercase tracking-widest">{toast.message}</p>
             </div>
           </div>
@@ -286,6 +296,21 @@ const App: React.FC = () => {
              </div>
           ) : (
             <div className="space-y-10">
+              {dbMode === 'LOCAL' && isSupabaseConfigured && (
+                 <div className="bg-orange-50 border border-orange-100 p-6 rounded-3xl flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="p-3 bg-orange-100 text-orange-600 rounded-2xl">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                      </div>
+                      <div>
+                        <p className="text-sm font-black text-orange-800 tracking-tight">Menjalankan Mode Lokal</p>
+                        <p className="text-[10px] text-orange-600 font-bold uppercase tracking-widest">Gagal terhubung ke database cloud. Pastikan tabel 'employees' sudah dibuat.</p>
+                      </div>
+                    </div>
+                    <button onClick={loadInitialData} className="px-6 py-3 bg-white border border-orange-200 text-orange-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-orange-100 transition-all">Coba Hubungkan Kembali</button>
+                 </div>
+              )}
+
               {currentView === 'DASHBOARD' && (
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
