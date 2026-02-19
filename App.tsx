@@ -18,6 +18,37 @@ const MONTHS = [
 
 const DEFAULT_LOGO = "https://upload.wikimedia.org/wikipedia/commons/0/07/Coat_of_arms_of_West_Nusa_Tenggara.png";
 
+const SQL_SCHEMA = `
+-- COPY & PASTE SCRIPT INI KE SQL EDITOR SUPABASE ANDA
+CREATE TABLE employees (
+  id TEXT PRIMARY KEY,
+  nip TEXT NOT NULL,
+  nama TEXT NOT NULL,
+  jabatan TEXT,
+  golongan TEXT,
+  tmt_golongan DATE,
+  tmt_kgb DATE,
+  tanggal_lahir DATE,
+  tempat_lahir TEXT,
+  no_hp TEXT,
+  unit_kerja TEXT,
+  gaji_pokok_lama TEXT,
+  nomor_skp_terakhir TEXT,
+  tgl_skp_terakhir DATE,
+  tgl_mulai_gaji_lama DATE,
+  masa_kerja_golongan_lama TEXT,
+  gaji_pokok_baru TEXT,
+  masa_kerja_baru TEXT,
+  golongan_baru TEXT,
+  keterangan TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- AKTIFKAN RLS (OPTIONAL)
+ALTER TABLE employees ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow all access" ON employees FOR ALL USING (true);
+`.trim();
+
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [currentView, setCurrentView] = useState<ViewType>('DASHBOARD');
@@ -31,6 +62,7 @@ const App: React.FC = () => {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'info' | 'error' } | null>(null);
   const [deptLogo, setDeptLogo] = useState<string>(DEFAULT_LOGO);
+  const [showSqlGuide, setShowSqlGuide] = useState(false);
   
   const logoInputRef = useRef<HTMLInputElement>(null);
 
@@ -86,7 +118,6 @@ const App: React.FC = () => {
   const loadInitialData = async () => {
     setIsLoadingData(true);
     
-    // Coba koneksi ke Supabase jika konfigurasi tersedia
     if (isSupabaseConfigured && supabase) {
       try {
         const { data, error } = await supabase
@@ -94,23 +125,17 @@ const App: React.FC = () => {
           .select('*')
           .order('nama', { ascending: true });
 
-        if (error) {
-          // Jika error karena tabel belum ada atau masalah izin
-          console.warn("Koneksi Supabase gagal (Tabel mungkin belum dibuat):", error.message);
-          throw error;
-        }
+        if (error) throw error;
         
         setEmployees(data || []);
         setDbMode('CLOUD');
         setToast({ message: 'Terhubung ke Database Cloud', type: 'success' });
       } catch (err: any) {
-        // Fallback otomatis ke data Lokal/Simulasi
-        console.log("Menggunakan Data Simulasi Lokal...");
+        console.warn("Koneksi Cloud bermasalah:", err.message);
         setEmployees(MOCK_EMPLOYEES);
         setDbMode('LOCAL');
       }
     } else {
-      // Tanpa konfigurasi Supabase, langsung ke Mode Lokal
       setEmployees(MOCK_EMPLOYEES);
       setDbMode('LOCAL');
     }
@@ -138,7 +163,7 @@ const App: React.FC = () => {
     if (dbMode === 'CLOUD' && supabase) {
       try {
         const payload = { ...emp };
-        delete (payload as any).avatar; // Hindari masalah upload jika tidak perlu
+        delete (payload as any).avatar;
 
         let result;
         if (selectedEmployee) {
@@ -154,7 +179,6 @@ const App: React.FC = () => {
         setToast({ message: 'Gagal simpan ke cloud: ' + err.message, type: 'error' });
       }
     } else {
-      // Penyimpanan di memori (volatile) jika mode lokal
       if (selectedEmployee) {
         setEmployees(prev => prev.map(e => e.id === emp.id ? emp : e));
       } else {
@@ -296,18 +320,49 @@ const App: React.FC = () => {
              </div>
           ) : (
             <div className="space-y-10">
-              {dbMode === 'LOCAL' && isSupabaseConfigured && (
-                 <div className="bg-orange-50 border border-orange-100 p-6 rounded-3xl flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="p-3 bg-orange-100 text-orange-600 rounded-2xl">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              {dbMode === 'LOCAL' && (
+                 <div className="bg-rose-50 border border-rose-100 p-8 rounded-[2.5rem] shadow-xl shadow-rose-100/20">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                      <div className="flex items-start space-x-5">
+                        <div className="p-4 bg-rose-100 text-rose-600 rounded-2xl shadow-lg shadow-rose-100">
+                          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-xl font-black text-rose-900 tracking-tight">Database Terputus / Terhapus</p>
+                          <p className="text-xs text-rose-700 font-medium">Sistem berjalan dalam mode lokal. Data yang anda masukkan saat ini tidak akan tersimpan secara permanen di cloud.</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-black text-orange-800 tracking-tight">Menjalankan Mode Lokal</p>
-                        <p className="text-[10px] text-orange-600 font-bold uppercase tracking-widest">Gagal terhubung ke database cloud. Pastikan tabel 'employees' sudah dibuat.</p>
+                      <div className="flex items-center gap-3">
+                        <button onClick={() => setShowSqlGuide(!showSqlGuide)} className="px-6 py-3.5 bg-white border border-rose-200 text-rose-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-50 transition-all shadow-sm">
+                          {showSqlGuide ? 'Tutup Panduan' : 'Lihat Panduan Pemulihan'}
+                        </button>
+                        <button onClick={loadInitialData} className="px-6 py-3.5 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-700 transition-all shadow-lg shadow-rose-200">Hubungkan Ulang</button>
                       </div>
                     </div>
-                    <button onClick={loadInitialData} className="px-6 py-3 bg-white border border-orange-200 text-orange-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-orange-100 transition-all">Coba Hubungkan Kembali</button>
+                    
+                    {showSqlGuide && (
+                      <div className="mt-8 pt-8 border-t border-rose-100 space-y-4 animate-fadeIn">
+                        <p className="text-[10px] font-black text-rose-400 uppercase tracking-widest">Langkah-langkah Pemulihan di Supabase:</p>
+                        <ol className="text-xs text-rose-800 space-y-2 list-decimal ml-4 font-medium">
+                          <li>Buka dashboard Supabase Anda.</li>
+                          <li>Pilih menu <span className="font-black underline">SQL Editor</span> di sidebar kiri.</li>
+                          <li>Klik <span className="font-black underline">+ New Query</span>.</li>
+                          <li>Salin script SQL di bawah ini dan klik <span className="font-black">Run</span>.</li>
+                        </ol>
+                        <div className="relative group">
+                          <pre className="bg-slate-900 text-indigo-300 p-6 rounded-2xl text-[10px] overflow-x-auto font-mono leading-relaxed border-2 border-slate-800 group-hover:border-indigo-500/50 transition-all">
+                            {SQL_SCHEMA}
+                          </pre>
+                          <button 
+                            onClick={() => { navigator.clipboard.writeText(SQL_SCHEMA); setToast({message: 'Script SQL disalin!', type: 'info'}); setTimeout(()=>setToast(null), 2000); }}
+                            className="absolute top-4 right-4 p-2 bg-slate-800 text-white rounded-lg hover:bg-indigo-600 transition-all"
+                            title="Salin SQL"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                          </button>
+                        </div>
+                      </div>
+                    )}
                  </div>
               )}
 
