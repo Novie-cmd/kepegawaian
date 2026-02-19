@@ -1,34 +1,11 @@
 
-import { GoogleGenAI, Type } from "@google/genai";
-import { Employee, Golongan } from "../types";
-
-// Fungsi pencarian kunci yang sama dengan database
-const getApiKey = (): string => {
-  const searchKeys = ['API_KEY', 'VITE_API_KEY', 'NEXT_PUBLIC_API_KEY'];
-  
-  for (const key of searchKeys) {
-    try {
-      const metaEnv = (import.meta as any).env;
-      if (metaEnv && metaEnv[key]) return metaEnv[key];
-    } catch (e) {}
-    
-    try {
-      if (typeof process !== 'undefined' && process.env && process.env[key]) {
-        return process.env[key];
-      }
-    } catch (e) {}
-  }
-  return '';
-};
-
-const getAiClient = () => {
-  const apiKey = getApiKey();
-  return new GoogleGenAI({ apiKey });
-};
+import { GoogleGenAI } from "@google/genai";
+import { Employee } from "../types";
 
 export const getAIAnalysis = async (employees: Employee[]) => {
   try {
-    const ai = getAiClient();
+    // Selalu inisialisasi baru dengan process.env.API_KEY
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
     const prompt = `
       Anda adalah pakar HR Analytics. Berdasarkan data pegawai berikut, berikan analisis ringkas:
       1. Ringkasan jumlah pegawai dan profil golongan.
@@ -54,15 +31,16 @@ export const getAIAnalysis = async (employees: Employee[]) => {
     return response.text;
   } catch (error) {
     console.error("AI Analysis Error:", error);
-    return "Maaf, terjadi kesalahan saat melakukan analisis AI. Pastikan API_KEY sudah diatur di Environment Variables.";
+    return "Gagal melakukan analisis AI. Pastikan API Key Gemini sudah terkonfigurasi di environment variable.";
   }
 };
 
 export const extractEmployeeDataFromImage = async (base64Image: string): Promise<Partial<Employee> | null> => {
   try {
-    const ai = getAiClient();
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
     const prompt = `
-      Extract employee information from this document.
+      Extract employee information from this document. 
+      Fields needed: nama, nip, golongan, jabatan, tmtGolongan, tmtKgb, tanggalLahir.
       Return ONLY a JSON object.
     `;
 

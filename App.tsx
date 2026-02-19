@@ -23,6 +23,7 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewType>('DASHBOARD');
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
+  const [dbMode, setDbMode] = useState<'CLOUD' | 'LOCAL'>('LOCAL');
   const [aiReport, setAiReport] = useState<string>('');
   const [isLoadingAi, setIsLoadingAi] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -43,7 +44,6 @@ const App: React.FC = () => {
       setIsAuthenticated(true);
     }
     
-    // Load saved logo
     const savedLogo = localStorage.getItem('dept_logo_base64');
     if (savedLogo) {
       setDeptLogo(savedLogo);
@@ -84,17 +84,33 @@ const App: React.FC = () => {
   };
 
   const loadInitialData = async () => {
+    setIsLoadingData(true);
     if (isSupabaseConfigured && supabase) {
-      await fetchEmployees();
+      try {
+        const { data, error } = await supabase
+          .from('employees')
+          .select('*')
+          .order('nama', { ascending: true });
+
+        if (error) throw error;
+        
+        setEmployees(data || []);
+        setDbMode('CLOUD');
+      } catch (err: any) {
+        console.warn("Cloud access failed, falling back to local:", err.message);
+        setEmployees(MOCK_EMPLOYEES);
+        setDbMode('LOCAL');
+        // Tidak menunjukkan error toast yang mengganggu jika fallback berhasil
+      }
     } else {
       setEmployees(MOCK_EMPLOYEES);
-      setIsLoadingData(false);
+      setDbMode('LOCAL');
     }
+    setIsLoadingData(false);
   };
 
   const fetchEmployees = async () => {
-    if (!supabase) return;
-    setIsLoadingData(true);
+    if (!supabase || dbMode === 'LOCAL') return;
     try {
       const { data, error } = await supabase
         .from('employees')
@@ -104,52 +120,29 @@ const App: React.FC = () => {
       if (error) throw error;
       setEmployees(data || []);
     } catch (err: any) {
-      console.error("Fetch error:", err);
-      setToast({ message: 'Gagal memuat data cloud', type: 'error' });
-      setEmployees(MOCK_EMPLOYEES);
-    } finally {
-      setIsLoadingData(false);
+      setToast({ message: 'Gagal sinkronisasi awan', type: 'error' });
+      setTimeout(() => setToast(null), 3000);
     }
   };
 
   const handleSaveEmployee = async (emp: Employee) => {
-    const payload = {
-      id: emp.id,
-      nip: emp.nip || '',
-      nama: emp.nama || '',
-      jabatan: emp.jabatan || '',
-      golongan: emp.golongan,
-      tmtGolongan: emp.tmtGolongan,
-      tmtKgb: emp.tmtKgb,
-      tanggalLahir: emp.tanggalLahir,
-      tempatLahir: emp.tempatLahir || null,
-      noHp: emp.noHp || null,
-      unitKerja: emp.unitKerja || null,
-      avatar: emp.avatar || null,
-      gajiPokokLama: emp.gajiPokokLama || null,
-      nomorSkpTerakhir: emp.nomorSkpTerakhir || null,
-      tglSkpTerakhir: emp.tglSkpTerakhir || null,
-      tglMulaiGajiLama: emp.tglMulaiGajiLama || null,
-      masaKerjaGolonganLama: emp.masaKerjaGolonganLama || null,
-      gajiPokokBaru: emp.gajiPokokBaru || null,
-      masaKerjaBaru: emp.masaKerjaBaru || null,
-      golonganBaru: emp.golonganBaru || null,
-      keterangan: emp.keterangan || null
-    };
-
-    if (isSupabaseConfigured && supabase) {
+    if (dbMode === 'CLOUD' && supabase) {
       try {
+        const payload = { ...emp };
+        delete (payload as any).avatar; // Hindari masalah upload jika tidak perlu
+
         let result;
         if (selectedEmployee) {
           result = await supabase.from('employees').update(payload).eq('id', emp.id);
         } else {
           result = await supabase.from('employees').insert([payload]);
         }
+        
         if (result.error) throw result.error;
         await fetchEmployees();
-        setToast({ message: 'Berhasil sinkronisasi!', type: 'success' });
+        setToast({ message: 'Berhasil sinkronisasi cloud!', type: 'success' });
       } catch (err: any) {
-        setToast({ message: `Error DB: ${err.message}`, type: 'error' });
+        setToast({ message: 'Error DB: ' + err.message, type: 'error' });
       }
     } else {
       if (selectedEmployee) {
@@ -157,16 +150,16 @@ const App: React.FC = () => {
       } else {
         setEmployees(prev => [emp, ...prev]);
       }
-      setToast({ message: 'Tersimpan (Lokal)', type: 'info' });
+      setToast({ message: 'Tersimpan di memori lokal', type: 'info' });
     }
     setTimeout(() => setToast(null), 3000);
   };
 
   const handleDeleteEmployee = async (id: string) => {
-    if (isSupabaseConfigured && supabase) {
+    if (dbMode === 'CLOUD' && supabase) {
       try {
         await supabase.from('employees').delete().eq('id', id);
-        setEmployees(prev => prev.filter(e => e.id !== id));
+        await fetchEmployees();
       } catch (err) {}
     } else {
       setEmployees(prev => prev.filter(e => e.id !== id));
@@ -200,7 +193,6 @@ const App: React.FC = () => {
     return Object.entries(groups).map(([name, value]) => ({ name, value }));
   }, [employees]);
 
-  // Logika filter gabungan untuk monitoring yang diperbaiki
   const monitoringData = useMemo(() => {
     return employees.filter(e => {
       const matchesSearch = e.nama.toLowerCase().includes(searchQuery.toLowerCase()) || e.nip.includes(searchQuery);
@@ -209,16 +201,13 @@ const App: React.FC = () => {
       if (currentView === 'KONTROL_PANGKAT') {
         return isDueInPeriod(e.tmtGolongan, filterMonth, filterYear, 4);
       }
-      
       if (currentView === 'KONTROL_KGB') {
         return isDueInPeriod(e.tmtKgb, filterMonth, filterYear, 2);
       }
-      
       if (currentView === 'KONTROL_PENSIUN') {
         const pensionDate = getRetirementDate(e.tanggalLahir);
         return pensionDate.getMonth() === filterMonth && pensionDate.getFullYear() === filterYear;
       }
-      
       return true;
     });
   }, [employees, currentView, filterMonth, filterYear, searchQuery]);
@@ -242,6 +231,14 @@ const App: React.FC = () => {
             <span className="text-[9px] text-slate-400 font-bold tracking-widest uppercase">DPMPTSP NTB</span>
           </div>
         </div>
+        
+        <div className="px-8 py-4">
+           <div className={`flex items-center space-x-2 px-4 py-2 rounded-xl border text-[9px] font-black uppercase tracking-widest ${dbMode === 'CLOUD' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-orange-500/10 border-orange-500/20 text-orange-400'}`}>
+              <div className={`w-2 h-2 rounded-full ${dbMode === 'CLOUD' ? 'bg-emerald-500 animate-pulse' : 'bg-orange-500'}`}></div>
+              <span>Database: {dbMode} Mode</span>
+           </div>
+        </div>
+
         <nav className="flex-1 p-6 space-y-2 overflow-y-auto">
           {NAV_ITEMS.map(item => (
             <button key={item.id} onClick={() => setCurrentView(item.id as ViewType)} className={`w-full flex items-center space-x-4 px-5 py-4 rounded-2xl transition-all ${currentView === item.id ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
@@ -282,118 +279,102 @@ const App: React.FC = () => {
         </header>
 
         <div className="flex-1 overflow-y-auto p-10 bg-gray-50/50">
-          <div className="space-y-10">
-            {currentView === 'DASHBOARD' && (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                  {stats.map((s, idx) => <StatCard key={idx} {...s} />)}
-                </div>
-                <div className="bg-white p-10 rounded-[2.5rem] shadow-xl border border-white">
-                  <h3 className="text-xl font-black text-slate-800 tracking-tight mb-8">Distribusi Golongan</h3>
-                  <div className="h-72">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 800}} dy={10} />
-                        <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 800}} />
-                        <Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}} />
-                        <Bar dataKey="value" radius={[8, 8, 8, 8]} barSize={40}>
-                          {chartData.map((_, index) => <Cell key={`cell-${index}`} fill={['#6366f1', '#10b981', '#f59e0b', '#ef4444'][index % 4]} />)}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
+          {isLoadingData ? (
+             <div className="flex flex-col items-center justify-center h-full space-y-4">
+                <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sinkronisasi Data...</p>
+             </div>
+          ) : (
+            <div className="space-y-10">
+              {currentView === 'DASHBOARD' && (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    {stats.map((s, idx) => <StatCard key={idx} {...s} />)}
                   </div>
-                </div>
-              </>
-            )}
-
-            {currentView === 'DATA_PEGAWAI' && (
-              <div className="space-y-8">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-2xl font-black text-slate-900 tracking-tight">Daftar Pegawai</h2>
-                  <div className="flex items-center space-x-3">
-                    <input 
-                      type="file" 
-                      ref={logoInputRef} 
-                      onChange={handleLogoUpload} 
-                      className="hidden" 
-                      accept=".ico,.png,.jpg,.jpeg" 
-                    />
-                    <button 
-                      onClick={() => logoInputRef.current?.click()} 
-                      className="bg-white border border-slate-200 text-slate-600 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center space-x-3 shadow-sm"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                      <span>Set Logo (.ico)</span>
-                    </button>
-                    <button onClick={() => { setSelectedEmployee(null); setIsModalOpen(true); }} className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-indigo-700 transition-all flex items-center space-x-3">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                      <span>Pegawai Baru</span>
-                    </button>
-                  </div>
-                </div>
-                <EmployeeTable employees={filteredEmployees} onAction={(e) => { setSelectedEmployee(e); setIsModalOpen(true); }} onDelete={handleDeleteEmployee} type="NORMAL" />
-              </div>
-            )}
-
-            {(currentView === 'KONTROL_PANGKAT' || currentView === 'KONTROL_KGB' || currentView === 'KONTROL_PENSIUN') && (
-              <div className="space-y-8">
-                <div className="bg-white p-8 rounded-[2rem] border border-slate-100 flex flex-col md:flex-row items-center gap-6 shadow-sm">
-                  <div className="flex-1">
-                    <h2 className="text-xl font-black text-slate-900 tracking-tight">Monitoring {currentView.split('_')[1]}</h2>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Pilih periode untuk pemantauan tepat</p>
-                  </div>
-                  
-                  {/* Period Selection Filters */}
-                  <div className="flex items-center space-x-3 bg-slate-50 p-2 rounded-2xl border border-slate-100">
-                    <div className="flex items-center space-x-2 px-3">
-                       <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                       <select value={filterMonth} onChange={(e) => setFilterMonth(parseInt(e.target.value))} className="bg-transparent border-none font-black text-[10px] uppercase tracking-widest text-slate-700 outline-none cursor-pointer focus:ring-0">
-                          {MONTHS.map((m, idx) => <option key={m} value={idx}>{m}</option>)}
-                       </select>
-                    </div>
-                    <div className="w-px h-5 bg-slate-200"></div>
-                    <div className="px-3">
-                       <select value={filterYear} onChange={(e) => setFilterYear(parseInt(e.target.value))} className="bg-transparent border-none font-black text-[10px] uppercase tracking-widest text-slate-700 outline-none cursor-pointer focus:ring-0">
-                          {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
-                       </select>
+                  <div className="bg-white p-10 rounded-[2.5rem] shadow-xl border border-white">
+                    <h3 className="text-xl font-black text-slate-800 tracking-tight mb-8">Distribusi Golongan</h3>
+                    <div className="h-72">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={chartData}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 800}} dy={10} />
+                          <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 800}} />
+                          <Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}} />
+                          <Bar dataKey="value" radius={[8, 8, 8, 8]} barSize={40}>
+                            {chartData.map((_, index) => <Cell key={`cell-${index}`} fill={['#6366f1', '#10b981', '#f59e0b', '#ef4444'][index % 4]} />)}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
                     </div>
                   </div>
-                </div>
-                
-                <EmployeeTable 
-                  employees={monitoringData} 
-                  onAction={(e) => { setSelectedEmployee(e); setIsModalOpen(true); }} 
-                  onDelete={handleDeleteEmployee}
-                  type={currentView === 'KONTROL_PANGKAT' ? 'PANGKAT' : currentView === 'KONTROL_KGB' ? 'KGB' : 'PENSIUN'} 
-                  selectedPeriod={{ month: filterMonth, year: filterYear }}
-                />
+                </>
+              )}
 
-                {monitoringData.length === 0 && (
-                  <div className="bg-white/50 border-2 border-dashed border-slate-200 rounded-[2rem] p-16 text-center">
-                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Tidak ada data untuk periode ini</p>
+              {currentView === 'DATA_PEGAWAI' && (
+                <div className="space-y-8">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">Daftar Pegawai</h2>
+                    <div className="flex items-center space-x-3">
+                      <input type="file" ref={logoInputRef} onChange={handleLogoUpload} className="hidden" accept=".ico,.png,.jpg,.jpeg" />
+                      <button onClick={() => logoInputRef.current?.click()} className="bg-white border border-slate-200 text-slate-600 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center space-x-3 shadow-sm">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        <span>Set Logo</span>
+                      </button>
+                      <button onClick={() => { setSelectedEmployee(null); setIsModalOpen(true); }} className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-indigo-700 transition-all flex items-center space-x-3">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                        <span>Pegawai Baru</span>
+                      </button>
+                    </div>
                   </div>
-                )}
-              </div>
-            )}
-
-            {currentView === 'AI_REPORT' && (
-              <div className="bg-white p-12 rounded-[3rem] shadow-xl border border-indigo-50 text-center space-y-8 max-w-3xl mx-auto">
-                <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto">
-                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                  <EmployeeTable employees={filteredEmployees} onAction={(e) => { setSelectedEmployee(e); setIsModalOpen(true); }} onDelete={handleDeleteEmployee} type="NORMAL" />
                 </div>
-                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Analisis Kepegawaian AI</h2>
-                <button onClick={generateAiReport} disabled={isLoadingAi} className="bg-indigo-600 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 disabled:opacity-50 transition-all">
-                  {isLoadingAi ? 'Menganalisis...' : 'Mulai Analisis'}
-                </button>
-                {aiReport && (
-                  <div className="text-left bg-slate-50 p-8 rounded-[2rem] border border-slate-100 animate-fadeIn whitespace-pre-wrap font-medium text-slate-700 text-sm leading-relaxed">
-                    {aiReport}
+              )}
+
+              {(currentView === 'KONTROL_PANGKAT' || currentView === 'KONTROL_KGB' || currentView === 'KONTROL_PENSIUN') && (
+                <div className="space-y-8">
+                  <div className="bg-white p-8 rounded-[2rem] border border-slate-100 flex flex-col md:flex-row items-center gap-6 shadow-sm">
+                    <div className="flex-1">
+                      <h2 className="text-xl font-black text-slate-900 tracking-tight">Monitoring {currentView.split('_')[1]}</h2>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Pilih periode pemantauan</p>
+                    </div>
+                    <div className="flex items-center space-x-3 bg-slate-50 p-2 rounded-2xl border border-slate-100">
+                      <select value={filterMonth} onChange={(e) => setFilterMonth(parseInt(e.target.value))} className="bg-transparent border-none font-black text-[10px] uppercase tracking-widest text-slate-700 outline-none cursor-pointer focus:ring-0">
+                        {MONTHS.map((m, idx) => <option key={m} value={idx}>{m}</option>)}
+                      </select>
+                      <div className="w-px h-5 bg-slate-200"></div>
+                      <select value={filterYear} onChange={(e) => setFilterYear(parseInt(e.target.value))} className="bg-transparent border-none font-black text-[10px] uppercase tracking-widest text-slate-700 outline-none cursor-pointer focus:ring-0">
+                        {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
+                      </select>
+                    </div>
                   </div>
-                )}
-              </div>
-            )}
-          </div>
+                  <EmployeeTable 
+                    employees={monitoringData} 
+                    onAction={(e) => { setSelectedEmployee(e); setIsModalOpen(true); }} 
+                    onDelete={handleDeleteEmployee}
+                    type={currentView === 'KONTROL_PANGKAT' ? 'PANGKAT' : currentView === 'KONTROL_KGB' ? 'KGB' : 'PENSIUN'} 
+                    selectedPeriod={{ month: filterMonth, year: filterYear }}
+                  />
+                </div>
+              )}
+
+              {currentView === 'AI_REPORT' && (
+                <div className="bg-white p-12 rounded-[3rem] shadow-xl border border-indigo-50 text-center space-y-8 max-w-3xl mx-auto">
+                  <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto shadow-lg shadow-indigo-100">
+                     <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                  </div>
+                  <h2 className="text-2xl font-black text-slate-900 tracking-tight">Analisis Kepegawaian AI</h2>
+                  <button onClick={generateAiReport} disabled={isLoadingAi} className="bg-indigo-600 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-xl shadow-indigo-100">
+                    {isLoadingAi ? 'Menganalisis...' : 'Mulai Analisis'}
+                  </button>
+                  {aiReport && (
+                    <div className="text-left bg-slate-50 p-8 rounded-[2rem] border border-slate-100 animate-fadeIn whitespace-pre-wrap font-medium text-slate-700 text-sm leading-relaxed">
+                      {aiReport}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </main>
 
