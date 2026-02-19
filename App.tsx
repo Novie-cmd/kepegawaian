@@ -18,37 +18,6 @@ const MONTHS = [
 
 const DEFAULT_LOGO = "https://upload.wikimedia.org/wikipedia/commons/0/07/Coat_of_arms_of_West_Nusa_Tenggara.png";
 
-const SQL_SCHEMA = `
--- COPY & PASTE SCRIPT INI KE SQL EDITOR SUPABASE ANDA
-CREATE TABLE employees (
-  id TEXT PRIMARY KEY,
-  nip TEXT NOT NULL,
-  nama TEXT NOT NULL,
-  jabatan TEXT,
-  golongan TEXT,
-  tmt_golongan DATE,
-  tmt_kgb DATE,
-  tanggal_lahir DATE,
-  tempat_lahir TEXT,
-  no_hp TEXT,
-  unit_kerja TEXT,
-  gaji_pokok_lama TEXT,
-  nomor_skp_terakhir TEXT,
-  tgl_skp_terakhir DATE,
-  tgl_mulai_gaji_lama DATE,
-  masa_kerja_golongan_lama TEXT,
-  gaji_pokok_baru TEXT,
-  masa_kerja_baru TEXT,
-  golongan_baru TEXT,
-  keterangan TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- AKTIFKAN RLS (OPTIONAL)
-ALTER TABLE employees ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow all access" ON employees FOR ALL USING (true);
-`.trim();
-
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [currentView, setCurrentView] = useState<ViewType>('DASHBOARD');
@@ -62,7 +31,6 @@ const App: React.FC = () => {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'info' | 'error' } | null>(null);
   const [deptLogo, setDeptLogo] = useState<string>(DEFAULT_LOGO);
-  const [showSqlGuide, setShowSqlGuide] = useState(false);
   
   const logoInputRef = useRef<HTMLInputElement>(null);
 
@@ -333,36 +301,9 @@ const App: React.FC = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <button onClick={() => setShowSqlGuide(!showSqlGuide)} className="px-6 py-3.5 bg-white border border-rose-200 text-rose-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-50 transition-all shadow-sm">
-                          {showSqlGuide ? 'Tutup Panduan' : 'Lihat Panduan Pemulihan'}
-                        </button>
                         <button onClick={loadInitialData} className="px-6 py-3.5 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-700 transition-all shadow-lg shadow-rose-200">Hubungkan Ulang</button>
                       </div>
                     </div>
-                    
-                    {showSqlGuide && (
-                      <div className="mt-8 pt-8 border-t border-rose-100 space-y-4 animate-fadeIn">
-                        <p className="text-[10px] font-black text-rose-400 uppercase tracking-widest">Langkah-langkah Pemulihan di Supabase:</p>
-                        <ol className="text-xs text-rose-800 space-y-2 list-decimal ml-4 font-medium">
-                          <li>Buka dashboard Supabase Anda.</li>
-                          <li>Pilih menu <span className="font-black underline">SQL Editor</span> di sidebar kiri.</li>
-                          <li>Klik <span className="font-black underline">+ New Query</span>.</li>
-                          <li>Salin script SQL di bawah ini dan klik <span className="font-black">Run</span>.</li>
-                        </ol>
-                        <div className="relative group">
-                          <pre className="bg-slate-900 text-indigo-300 p-6 rounded-2xl text-[10px] overflow-x-auto font-mono leading-relaxed border-2 border-slate-800 group-hover:border-indigo-500/50 transition-all">
-                            {SQL_SCHEMA}
-                          </pre>
-                          <button 
-                            onClick={() => { navigator.clipboard.writeText(SQL_SCHEMA); setToast({message: 'Script SQL disalin!', type: 'info'}); setTimeout(()=>setToast(null), 2000); }}
-                            className="absolute top-4 right-4 p-2 bg-slate-800 text-white rounded-lg hover:bg-indigo-600 transition-all"
-                            title="Salin SQL"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
-                          </button>
-                        </div>
-                      </div>
-                    )}
                  </div>
               )}
 
