@@ -46,8 +46,8 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
              <img src={ntbLogoUrl} alt="Logo Instansi" className="h-32 w-auto object-contain block" crossOrigin="anonymous" />
           </div>
           <div className="flex-1 text-center pr-10">
-            <h1 className="text-[15px] font-normal uppercase tracking-tight leading-tight">Pemerintah Provinsi Nusa Tenggara Barat</h1>
-            <h2 className="text-[20px] font-bold uppercase leading-tight mt-1 whitespace-nowrap">Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu</h2>
+            <h1 className="text-[14px] font-bold uppercase tracking-tight leading-tight">Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu</h1>
+            <h2 className="text-[12px] font-normal uppercase leading-tight mt-1 whitespace-nowrap">Pemerintah Provinsi Nusa Tenggara Barat</h2>
             <p className="text-[10px] mt-2 font-sans font-normal">Jalan Udayana No. 4 Selaparang. Kota Mataram, Nusa Tenggara Barat 83122</p>
             <p className="text-[10px] font-sans font-normal">Telepon (0370) 631060 - 632632, Faksimile (0370) 6634926</p>
           </div>
