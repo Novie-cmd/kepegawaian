@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { ViewType, Employee } from './types';
-import { NAV_ITEMS, MOCK_EMPLOYEES } from './constants';
+import { ViewType, Employee, AgencyConfig } from './types';
+import { NAV_ITEMS, MOCK_EMPLOYEES, DEFAULT_AGENCY_CONFIG } from './constants';
 import StatCard from './components/StatCard';
 import EmployeeTable from './components/EmployeeTable';
 import EmployeeModal from './components/EmployeeModal';
@@ -31,6 +31,7 @@ const App: React.FC = () => {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'info' | 'error' } | null>(null);
   const [deptLogo, setDeptLogo] = useState<string>(DEFAULT_LOGO);
+  const [agencyConfig, setAgencyConfig] = useState<AgencyConfig>(DEFAULT_AGENCY_CONFIG);
   const [lastSync, setLastSync] = useState<string>('');
   
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -48,6 +49,15 @@ const App: React.FC = () => {
     const savedLogo = localStorage.getItem('dept_logo_base64');
     if (savedLogo) {
       setDeptLogo(savedLogo);
+    }
+
+    const savedConfig = localStorage.getItem('agency_config');
+    if (savedConfig) {
+      try {
+        setAgencyConfig(JSON.parse(savedConfig));
+      } catch (e) {
+        console.error("Gagal memuat konfigurasi instansi");
+      }
     }
   }, []);
 
@@ -78,10 +88,23 @@ const App: React.FC = () => {
       const base64 = reader.result as string;
       setDeptLogo(base64);
       localStorage.setItem('dept_logo_base64', base64);
+      
+      // Update config as well
+      const updatedConfig = { ...agencyConfig, logoBase64: base64 };
+      setAgencyConfig(updatedConfig);
+      localStorage.setItem('agency_config', JSON.stringify(updatedConfig));
+      
       setToast({ message: 'Logo instansi diperbarui!', type: 'success' });
       setTimeout(() => setToast(null), 3000);
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleSaveConfig = (newConfig: AgencyConfig) => {
+    setAgencyConfig(newConfig);
+    localStorage.setItem('agency_config', JSON.stringify(newConfig));
+    setToast({ message: 'Profil instansi berhasil diperbarui!', type: 'success' });
+    setTimeout(() => setToast(null), 3000);
   };
 
   const loadInitialData = async () => {
@@ -235,7 +258,7 @@ const App: React.FC = () => {
           <div className="w-10 h-10 bg-indigo-500 rounded-2xl flex items-center justify-center font-black text-2xl">H</div>
           <div>
             <span className="text-xl font-black tracking-tight block">HR-Pro</span>
-            <span className="text-[9px] text-slate-400 font-bold tracking-widest uppercase">DPMPTSP NTB</span>
+            <span className="text-[9px] text-slate-400 font-bold tracking-widest uppercase">{agencyConfig.namaSkpdPendek}</span>
           </div>
         </div>
         
@@ -437,6 +460,130 @@ const App: React.FC = () => {
                   )}
                 </div>
               )}
+
+              {currentView === 'SETTINGS' && (
+                <div className="max-w-4xl mx-auto space-y-10 animate-fadeIn">
+                  <div className="bg-white p-10 rounded-[2.5rem] shadow-xl border border-white space-y-8">
+                    <div className="flex items-center space-x-4 mb-4">
+                      <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                      </div>
+                      <div>
+                        <h2 className="text-2xl font-black text-slate-900 tracking-tight">Profil Instansi</h2>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Sesuaikan identitas aplikasi untuk SKPD Anda</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nama Pemerintah (Baris 1 Kop)</label>
+                        <input 
+                          type="text" 
+                          value={agencyConfig.namaPemerintah} 
+                          onChange={(e) => setAgencyConfig({...agencyConfig, namaPemerintah: e.target.value})}
+                          className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nama SKPD Lengkap (Baris 2 Kop)</label>
+                        <input 
+                          type="text" 
+                          value={agencyConfig.namaSkpd} 
+                          onChange={(e) => setAgencyConfig({...agencyConfig, namaSkpd: e.target.value})}
+                          className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nama SKPD (Baris 3 Kop)</label>
+                        <input 
+                          type="text" 
+                          value={agencyConfig.namaSkpdPendek} 
+                          onChange={(e) => setAgencyConfig({...agencyConfig, namaSkpdPendek: e.target.value})}
+                          className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Alamat Lengkap</label>
+                        <input 
+                          type="text" 
+                          value={agencyConfig.alamat} 
+                          onChange={(e) => setAgencyConfig({...agencyConfig, alamat: e.target.value})}
+                          className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Telepon</label>
+                        <input 
+                          type="text" 
+                          value={agencyConfig.telepon} 
+                          onChange={(e) => setAgencyConfig({...agencyConfig, telepon: e.target.value})}
+                          className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Fax</label>
+                        <input 
+                          type="text" 
+                          value={agencyConfig.fax} 
+                          onChange={(e) => setAgencyConfig({...agencyConfig, fax: e.target.value})}
+                          className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="pt-6 border-t border-slate-100">
+                      <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-6">Pejabat Penandatangan (Kepala Dinas)</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nama Lengkap & Gelar</label>
+                          <input 
+                            type="text" 
+                            value={agencyConfig.namaKepala} 
+                            onChange={(e) => setAgencyConfig({...agencyConfig, namaKepala: e.target.value})}
+                            className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">NIP</label>
+                          <input 
+                            type="text" 
+                            value={agencyConfig.nipKepala} 
+                            onChange={(e) => setAgencyConfig({...agencyConfig, nipKepala: e.target.value})}
+                            className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Pangkat / Golongan</label>
+                          <input 
+                            type="text" 
+                            value={agencyConfig.pangkatKepala} 
+                            onChange={(e) => setAgencyConfig({...agencyConfig, pangkatKepala: e.target.value})}
+                            className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Jabatan</label>
+                          <input 
+                            type="text" 
+                            value={agencyConfig.jabatanKepala} 
+                            onChange={(e) => setAgencyConfig({...agencyConfig, jabatanKepala: e.target.value})}
+                            className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end pt-6">
+                      <button 
+                        onClick={() => handleSaveConfig(agencyConfig)}
+                        className="bg-indigo-600 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all"
+                      >
+                        Simpan Perubahan
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -449,6 +596,7 @@ const App: React.FC = () => {
         initialData={selectedEmployee} 
         onDelete={handleDeleteEmployee} 
         deptLogo={deptLogo}
+        agencyConfig={agencyConfig}
       />
     </div>
   );

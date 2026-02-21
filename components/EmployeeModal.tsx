@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Employee, Golongan } from '../types';
+import { Employee, Golongan, AgencyConfig } from '../types';
 import { extractEmployeeDataFromImage } from '../services/geminiService';
 import { formatDate } from '../utils/dateUtils';
 import { formatRupiah } from '../utils/numberUtils';
@@ -12,9 +12,10 @@ interface EmployeeModalProps {
   onDelete?: (id: string) => void;
   initialData?: Employee | null;
   deptLogo?: string;
+  agencyConfig: AgencyConfig;
 }
 
-const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (show: boolean) => void, deptLogo?: string }> = ({ formData, setShowPreview, deptLogo }) => {
+const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (show: boolean) => void, deptLogo?: string, agencyConfig: AgencyConfig }> = ({ formData, setShowPreview, deptLogo, agencyConfig }) => {
   const handlePrint = () => {
     window.print();
   };
@@ -46,18 +47,18 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
              <img src={ntbLogoUrl} alt="Logo Instansi" className="h-32 w-auto object-contain block" crossOrigin="anonymous" />
           </div>
           <div className="flex-1 text-center pr-10">
-            <h1 className="text-[12px] font-normal uppercase tracking-[0.15em] leading-tight">Pemerintah Provinsi Nusa Tenggara Barat</h1>
-            <h2 className="text-[17px] font-bold uppercase leading-tight mt-1 tracking-[0.05em] whitespace-nowrap">Dinas Penanaman Modal dan PTSP</h2>
-            <h2 className="text-[17px] font-bold uppercase leading-tight tracking-[0.05em] whitespace-nowrap">Provinsi Nusa Tenggara Barat</h2>
-            <p className="text-[10px] mt-2 font-sans font-normal tracking-wide">Jalan Udayana No. 4 Selaparang. Kota Mataram, Nusa Tenggara Barat 83122</p>
-            <p className="text-[10px] font-sans font-normal tracking-wide">Telepon (0370) 631060 - 632632, Faksimile (0370) 6634926</p>
+            <h1 className="text-[12px] font-normal uppercase tracking-[0.15em] leading-tight">{agencyConfig.namaPemerintah}</h1>
+            <h2 className="text-[17px] font-bold uppercase leading-tight mt-1 tracking-[0.05em] whitespace-nowrap">{agencyConfig.namaSkpd}</h2>
+            <h2 className="text-[17px] font-bold uppercase leading-tight tracking-[0.05em] whitespace-nowrap">{agencyConfig.namaSkpdPendek}</h2>
+            <p className="text-[10px] mt-2 font-sans font-normal tracking-wide">{agencyConfig.alamat}</p>
+            <p className="text-[10px] font-sans font-normal tracking-wide">Telepon {agencyConfig.telepon}, Faksimile {agencyConfig.fax}</p>
           </div>
         </div>
         <div className="border-b-[1px] border-black mb-6"></div>
 
         <div className="flex justify-between mb-6 text-[12px]">
           <div className="space-y-0.5">
-            <p><span className="inline-block w-16">Nomor</span>: 822.3 / {formData.nomorSkpTerakhir?.split('/')[1] || '021'} /DPMPTSP/2026</p>
+            <p><span className="inline-block w-16">Nomor</span>: 822.3 / {formData.nomorSkpTerakhir?.split('/')[1] || '021'} /{agencyConfig.namaSkpdPendek.split(' ')[0]}/2026</p>
             <p><span className="inline-block w-16">Lamp.</span>: --</p>
             <p><span className="inline-block w-16">Perihal</span>: <span className="font-bold underline">Kenaikan Gaji Berkala</span></p>
             <p className="ml-16 font-bold uppercase">An. {formData.nama}</p>
@@ -81,14 +82,14 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
             <div>1.</div><div>Nama/ Tanggal Lahir</div><div>:</div><div className="font-bold uppercase">{formData.nama} / {formData.tanggalLahir ? formatDate(formData.tanggalLahir).split(' ').join('-') : '-'}</div>
             <div>2.</div><div>NIP</div><div>:</div><div className="font-bold">{formData.nip}</div>
             <div>3.</div><div>Pangkat/ Jabatan</div><div>:</div><div>{formData.golongan} / {formData.jabatan}</div>
-            <div>4.</div><div>Unit Kerja</div><div>:</div><div className="font-bold uppercase">{formData.unitKerja || 'DPMPTSP PROV. NTB'}</div>
+            <div>4.</div><div>Unit Kerja</div><div>:</div><div className="font-bold uppercase">{formData.unitKerja || agencyConfig.namaSkpdPendek}</div>
             <div>5.</div><div>Gaji Pokok Lama</div><div>:</div><div><span className="font-bold">Rp. {formData.gajiPokokLama || '-'}</span></div>
           </div>
 
           <p className="ml-10 italic font-medium">(Atas dasar SKP Terakhir tentang gaji / pangkat yang telah ditetapkan) :</p>
           
           <div className="grid grid-cols-[60px_130px_10px_1fr] gap-y-0.5 ml-4">
-            <div></div><div>a. Oleh Pejabat</div><div>:</div><div className="uppercase">KEPALA DPMPTSP PROVINSI NTB</div>
+            <div></div><div>a. Oleh Pejabat</div><div>:</div><div className="uppercase">{agencyConfig.jabatanKepala} {agencyConfig.namaSkpdPendek}</div>
             <div></div><div>b. Tanggal</div><div>:</div><div>{formData.tglSkpTerakhir ? formatDate(formData.tglSkpTerakhir) : '-'}</div>
             <div></div><div>c. Nomor</div><div>:</div><div>{formData.nomorSkpTerakhir || '-'}</div>
             <div></div><div>d. Tanggal mulai berlaku</div><div>:</div><div>{formData.tglMulaiGajiLama ? formatDate(formData.tglMulaiGajiLama) : '-'}</div>
@@ -107,12 +108,12 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
 
         <div className="mt-12 flex justify-end">
           <div className="text-left w-[300px] text-[12px]">
-            <p className="font-bold uppercase italic">a.n. GUBERNUR NUSA TENGGARA BARAT</p>
-            <p className="font-bold uppercase ml-8">KEPALA DINAS,</p>
+            <p className="font-bold uppercase italic">a.n. GUBERNUR {agencyConfig.namaPemerintah.split(' ').slice(2).join(' ')}</p>
+            <p className="font-bold uppercase ml-8">{agencyConfig.jabatanKepala},</p>
             <div className="h-20"></div>
-            <p className="font-bold underline uppercase tracking-tight">H. Irnadi Kusuma, S.STP., ME</p>
-            <p className="font-medium">Pembina Utama Muda (IV/c)</p>
-            <p>NIP. 19771231 199703 1 004</p>
+            <p className="font-bold underline uppercase tracking-tight">{agencyConfig.namaKepala}</p>
+            <p className="font-medium">{agencyConfig.pangkatKepala}</p>
+            <p>NIP. {agencyConfig.nipKepala}</p>
           </div>
         </div>
       </div>
@@ -120,7 +121,7 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
   );
 };
 
-const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, onDelete, initialData, deptLogo }) => {
+const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, onDelete, initialData, deptLogo, agencyConfig }) => {
   const [activeTab, setActiveTab] = useState<'DATA' | 'SKP_LAMA' | 'SKP_BARU'>('DATA');
   const [isScanning, setIsScanning] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -133,7 +134,7 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, 
     tempatLahir: '',
     tanggalLahir: '',
     noHp: '',
-    unitKerja: 'DPMPTSP PROV. NTB',
+    unitKerja: agencyConfig.namaSkpdPendek,
     gajiPokokLama: '',
     nomorSkpTerakhir: '',
     tglSkpTerakhir: '',
@@ -161,7 +162,7 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, 
         tempatLahir: '',
         tanggalLahir: '',
         noHp: '',
-        unitKerja: 'DPMPTSP PROV. NTB',
+        unitKerja: agencyConfig.namaSkpdPendek,
         gajiPokokLama: '',
         nomorSkpTerakhir: '',
         tglSkpTerakhir: '',
@@ -177,7 +178,7 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, 
     }
     setActiveTab('DATA');
     setShowPreview(false);
-  }, [initialData, isOpen]);
+  }, [initialData, isOpen, agencyConfig]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -221,7 +222,7 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, 
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-fadeIn">
       <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[95vh] border border-slate-100">
         
-        {showPreview && <LetterPreview formData={formData} setShowPreview={setShowPreview} deptLogo={deptLogo} />}
+        {showPreview && <LetterPreview formData={formData} setShowPreview={setShowPreview} deptLogo={deptLogo} agencyConfig={agencyConfig} />}
 
         <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-white">
           <div className="flex items-center space-x-4">
