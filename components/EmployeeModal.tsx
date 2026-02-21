@@ -64,7 +64,7 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
             <p className="ml-16 font-bold uppercase">An. {formData.nama}</p>
           </div>
           <div className="text-right">
-            <p>Mataram, <span className="font-bold">{new Date().getDate()} {['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'][new Date().getMonth()]} {new Date().getFullYear()}</span></p>
+            <p>Mataram, <span className="font-bold">{formData.tglSuratKgb ? formatDate(formData.tglSuratKgb) : `${new Date().getDate()} ${['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'][new Date().getMonth()]} ${new Date().getFullYear()}`}</span></p>
           </div>
         </div>
 
@@ -145,6 +145,7 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, 
     golonganBaru: '',
     tmtGolongan: '',
     tmtKgb: '',
+    tglSuratKgb: '',
     keterangan: '',
   });
 
@@ -173,6 +174,7 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, 
         golonganBaru: '',
         tmtGolongan: '',
         tmtKgb: '',
+        tglSuratKgb: '',
         keterangan: '',
       });
     }
@@ -373,6 +375,10 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, 
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Golongan/Ruang Baru</label>
                   <input name="golonganBaru" value={formData.golonganBaru} onChange={handleInputChange} placeholder="Contoh: III/d" className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Tanggal Surat Dibuat</label>
+                  <input type="date" name="tglSuratKgb" value={formData.tglSuratKgb} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
                 <div className="col-span-2">
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Keterangan / Catatan</label>

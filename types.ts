@@ -31,6 +31,7 @@ export interface Employee {
   gajiPokokBaru?: string;
   masaKerjaBaru?: string;
   golonganBaru?: string;
+  tglSuratKgb?: string;
   keterangan?: string;
 }
 
