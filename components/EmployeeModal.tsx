@@ -272,41 +272,41 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, 
               <div className="grid grid-cols-2 gap-6 animate-fadeIn">
                 <div className="col-span-2">
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nama Lengkap & Gelar</label>
-                  <input required name="nama" value={formData.nama} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-300 transition-all" />
+                  <input required name="nama" value={formData.nama || ''} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-300 transition-all" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">NIP</label>
-                  <input required name="nip" value={formData.nip} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                  <input required name="nip" value={formData.nip || ''} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Golongan Saat Ini</label>
-                  <select name="golongan" value={formData.golongan} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none">
+                  <select name="golongan" value={formData.golongan || ''} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none">
                     {Object.values(Golongan).map(g => <option key={g} value={g}>{g}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">TMT Golongan</label>
-                  <input type="date" name="tmtGolongan" value={formData.tmtGolongan} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                  <input type="date" name="tmtGolongan" value={formData.tmtGolongan || ''} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
                 <div className="col-span-2">
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Jabatan</label>
-                  <input required name="jabatan" value={formData.jabatan} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                  <input required name="jabatan" value={formData.jabatan || ''} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Tempat Lahir</label>
-                  <input name="tempatLahir" value={formData.tempatLahir} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                  <input name="tempatLahir" value={formData.tempatLahir || ''} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Tanggal Lahir</label>
-                  <input type="date" name="tanggalLahir" value={formData.tanggalLahir} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                  <input type="date" name="tanggalLahir" value={formData.tanggalLahir || ''} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Unit Kerja</label>
-                  <input name="unitKerja" value={formData.unitKerja} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                  <input name="unitKerja" value={formData.unitKerja || ''} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">No. HP / WhatsApp</label>
-                  <input name="noHp" value={formData.noHp} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                  <input name="noHp" value={formData.noHp || ''} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
               </div>
             )}
@@ -323,24 +323,24 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, 
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Gaji Pokok Lama</label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">Rp</span>
-                    <input name="gajiPokokLama" value={formData.gajiPokokLama} onChange={handleInputChange} placeholder="0" className="w-full pl-10 pr-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                    <input name="gajiPokokLama" value={formData.gajiPokokLama || ''} onChange={handleInputChange} placeholder="0" className="w-full pl-10 pr-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Masa Kerja Golongan</label>
-                  <input name="masaKerjaGolonganLama" value={formData.masaKerjaGolonganLama} onChange={handleInputChange} placeholder="Contoh: 10 Tahun 00 Bulan" className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                  <input name="masaKerjaGolonganLama" value={formData.masaKerjaGolonganLama || ''} onChange={handleInputChange} placeholder="Contoh: 10 Tahun 00 Bulan" className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
                 <div className="col-span-2">
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nomor SKP / SK KGB Terakhir</label>
-                  <input name="nomorSkpTerakhir" value={formData.nomorSkpTerakhir} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                  <input name="nomorSkpTerakhir" value={formData.nomorSkpTerakhir || ''} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Tanggal SKP</label>
-                  <input type="date" name="tglSkpTerakhir" value={formData.tglSkpTerakhir} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                  <input type="date" name="tglSkpTerakhir" value={formData.tglSkpTerakhir || ''} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Tanggal Mulai Berlaku</label>
-                  <input type="date" name="tglMulaiGajiLama" value={formData.tglMulaiGajiLama} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                  <input type="date" name="tglMulaiGajiLama" value={formData.tglMulaiGajiLama || ''} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
               </div>
             )}
@@ -361,28 +361,28 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, 
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Gaji Pokok Baru</label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">Rp</span>
-                    <input name="gajiPokokBaru" value={formData.gajiPokokBaru} onChange={handleInputChange} className="w-full pl-10 pr-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                    <input name="gajiPokokBaru" value={formData.gajiPokokBaru || ''} onChange={handleInputChange} className="w-full pl-10 pr-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">TMT KGB (Mulai Tanggal)</label>
-                  <input type="date" name="tmtKgb" value={formData.tmtKgb} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                  <input type="date" name="tmtKgb" value={formData.tmtKgb || ''} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Masa Kerja Baru</label>
-                  <input name="masaKerjaBaru" value={formData.masaKerjaBaru} onChange={handleInputChange} placeholder="Contoh: 12 Tahun 00 Bulan" className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                  <input name="masaKerjaBaru" value={formData.masaKerjaBaru || ''} onChange={handleInputChange} placeholder="Contoh: 12 Tahun 00 Bulan" className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Golongan/Ruang Baru</label>
-                  <input name="golonganBaru" value={formData.golonganBaru} onChange={handleInputChange} placeholder="Contoh: III/d" className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                  <input name="golonganBaru" value={formData.golonganBaru || ''} onChange={handleInputChange} placeholder="Contoh: III/d" className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Tanggal Surat Dibuat</label>
-                  <input type="date" name="tglSuratKgb" value={formData.tglSuratKgb} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                  <input type="date" name="tglSuratKgb" value={formData.tglSuratKgb || ''} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
                 <div className="col-span-2">
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Keterangan / Catatan</label>
-                  <textarea name="keterangan" value={formData.keterangan} onChange={handleInputChange} rows={3} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                  <textarea name="keterangan" value={formData.keterangan || ''} onChange={handleInputChange} rows={3} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
               </div>
             )}

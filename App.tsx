@@ -479,7 +479,7 @@ const App: React.FC = () => {
                         <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nama Pemerintah (Baris 1 Kop)</label>
                         <input 
                           type="text" 
-                          value={agencyConfig.namaPemerintah} 
+                          value={agencyConfig.namaPemerintah || ''} 
                           onChange={(e) => setAgencyConfig({...agencyConfig, namaPemerintah: e.target.value})}
                           className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
                         />
@@ -488,7 +488,7 @@ const App: React.FC = () => {
                         <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nama SKPD Lengkap (Baris 2 Kop)</label>
                         <input 
                           type="text" 
-                          value={agencyConfig.namaSkpd} 
+                          value={agencyConfig.namaSkpd || ''} 
                           onChange={(e) => setAgencyConfig({...agencyConfig, namaSkpd: e.target.value})}
                           className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
                         />
@@ -497,7 +497,7 @@ const App: React.FC = () => {
                         <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nama SKPD (Baris 3 Kop)</label>
                         <input 
                           type="text" 
-                          value={agencyConfig.namaSkpdPendek} 
+                          value={agencyConfig.namaSkpdPendek || ''} 
                           onChange={(e) => setAgencyConfig({...agencyConfig, namaSkpdPendek: e.target.value})}
                           className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
                         />
@@ -506,7 +506,7 @@ const App: React.FC = () => {
                         <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Alamat Lengkap</label>
                         <input 
                           type="text" 
-                          value={agencyConfig.alamat} 
+                          value={agencyConfig.alamat || ''} 
                           onChange={(e) => setAgencyConfig({...agencyConfig, alamat: e.target.value})}
                           className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
                         />
@@ -515,7 +515,7 @@ const App: React.FC = () => {
                         <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Telepon</label>
                         <input 
                           type="text" 
-                          value={agencyConfig.telepon} 
+                          value={agencyConfig.telepon || ''} 
                           onChange={(e) => setAgencyConfig({...agencyConfig, telepon: e.target.value})}
                           className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
                         />
@@ -524,7 +524,7 @@ const App: React.FC = () => {
                         <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Fax</label>
                         <input 
                           type="text" 
-                          value={agencyConfig.fax} 
+                          value={agencyConfig.fax || ''} 
                           onChange={(e) => setAgencyConfig({...agencyConfig, fax: e.target.value})}
                           className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
                         />
@@ -538,7 +538,7 @@ const App: React.FC = () => {
                           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nama Lengkap & Gelar</label>
                           <input 
                             type="text" 
-                            value={agencyConfig.namaKepala} 
+                            value={agencyConfig.namaKepala || ''} 
                             onChange={(e) => setAgencyConfig({...agencyConfig, namaKepala: e.target.value})}
                             className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
                           />
@@ -547,7 +547,7 @@ const App: React.FC = () => {
                           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">NIP</label>
                           <input 
                             type="text" 
-                            value={agencyConfig.nipKepala} 
+                            value={agencyConfig.nipKepala || ''} 
                             onChange={(e) => setAgencyConfig({...agencyConfig, nipKepala: e.target.value})}
                             className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
                           />
@@ -556,7 +556,7 @@ const App: React.FC = () => {
                           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Pangkat / Golongan</label>
                           <input 
                             type="text" 
-                            value={agencyConfig.pangkatKepala} 
+                            value={agencyConfig.pangkatKepala || ''} 
                             onChange={(e) => setAgencyConfig({...agencyConfig, pangkatKepala: e.target.value})}
                             className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
                           />
@@ -565,7 +565,7 @@ const App: React.FC = () => {
                           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Jabatan</label>
                           <input 
                             type="text" 
-                            value={agencyConfig.jabatanKepala} 
+                            value={agencyConfig.jabatanKepala || ''} 
                             onChange={(e) => setAgencyConfig({...agencyConfig, jabatanKepala: e.target.value})}
                             className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
                           />
