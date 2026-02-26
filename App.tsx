@@ -125,11 +125,29 @@ const App: React.FC = () => {
         setToast({ message: 'Data Online Berhasil Disinkronkan', type: 'success' });
       } catch (err: any) {
         console.warn("Koneksi Cloud bermasalah:", err.message);
-        setEmployees(MOCK_EMPLOYEES);
+        const savedEmployees = localStorage.getItem('local_employees');
+        if (savedEmployees) {
+          try {
+            setEmployees(JSON.parse(savedEmployees));
+          } catch (e) {
+            setEmployees(MOCK_EMPLOYEES);
+          }
+        } else {
+          setEmployees(MOCK_EMPLOYEES);
+        }
         setDbMode('LOCAL');
       }
     } else {
-      setEmployees(MOCK_EMPLOYEES);
+      const savedEmployees = localStorage.getItem('local_employees');
+      if (savedEmployees) {
+        try {
+          setEmployees(JSON.parse(savedEmployees));
+        } catch (e) {
+          setEmployees(MOCK_EMPLOYEES);
+        }
+      } else {
+        setEmployees(MOCK_EMPLOYEES);
+      }
       setDbMode('LOCAL');
     }
     
@@ -173,12 +191,15 @@ const App: React.FC = () => {
         setToast({ message: 'Gagal simpan ke cloud: ' + err.message, type: 'error' });
       }
     } else {
+      let updatedEmployees;
       if (selectedEmployee) {
-        setEmployees(prev => prev.map(e => e.id === emp.id ? emp : e));
+        updatedEmployees = employees.map(e => e.id === emp.id ? emp : e);
       } else {
-        setEmployees(prev => [emp, ...prev]);
+        updatedEmployees = [emp, ...employees];
       }
-      setToast({ message: 'Data disimpan di memori lokal', type: 'info' });
+      setEmployees(updatedEmployees);
+      localStorage.setItem('local_employees', JSON.stringify(updatedEmployees));
+      setToast({ message: 'Data disimpan di penyimpanan lokal browser', type: 'info' });
     }
     setTimeout(() => setToast(null), 3000);
   };
@@ -191,7 +212,10 @@ const App: React.FC = () => {
         setToast({ message: 'Data dihapus dari sistem online', type: 'success' });
       } catch (err) {}
     } else {
-      setEmployees(prev => prev.filter(e => e.id !== id));
+      const updatedEmployees = employees.filter(e => e.id !== id);
+      setEmployees(updatedEmployees);
+      localStorage.setItem('local_employees', JSON.stringify(updatedEmployees));
+      setToast({ message: 'Data dihapus dari penyimpanan lokal', type: 'success' });
     }
     setTimeout(() => setToast(null), 3000);
   };
