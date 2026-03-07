@@ -485,16 +485,37 @@ const App: React.FC = () => {
                 </div>
               )}
 
-              {currentView === 'SETTINGS' && (
+              {currentView === 'DATA_DINAS' && (
                 <div className="max-w-4xl mx-auto space-y-10 animate-fadeIn">
                   <div className="bg-white p-10 rounded-[2.5rem] shadow-xl border border-white space-y-8">
-                    <div className="flex items-center space-x-4 mb-4">
-                      <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center">
+                          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                        </div>
+                        <div>
+                          <h2 className="text-2xl font-black text-slate-900 tracking-tight">Data Dinas / Instansi</h2>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Kelola identitas dan logo SKPD Anda</p>
+                        </div>
                       </div>
-                      <div>
-                        <h2 className="text-2xl font-black text-slate-900 tracking-tight">Profil Instansi</h2>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Sesuaikan identitas aplikasi untuk SKPD Anda</p>
+                      
+                      <div className="flex flex-col items-center space-y-2">
+                        <div className="w-24 h-24 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden relative group">
+                          {deptLogo ? (
+                            <img src={deptLogo} alt="Logo Dinas" className="w-full h-full object-contain p-2" />
+                          ) : (
+                            <svg className="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                          )}
+                          <button 
+                            onClick={() => logoInputRef.current?.click()}
+                            className="absolute inset-0 bg-indigo-600/80 text-white opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-[8px] font-black uppercase tracking-tighter"
+                          >
+                            <svg className="w-4 h-4 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                            Ganti Logo
+                          </button>
+                          <input type="file" ref={logoInputRef} onChange={handleLogoUpload} className="hidden" accept="image/*" />
+                        </div>
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Logo Instansi</span>
                       </div>
                     </div>
 
@@ -509,7 +530,7 @@ const App: React.FC = () => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nama SKPD Lengkap (Baris 2 Kop)</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nama Dinas / Instansi (Baris 2 Kop)</label>
                         <input 
                           type="text" 
                           value={agencyConfig.namaSkpd || ''} 
@@ -556,7 +577,7 @@ const App: React.FC = () => {
                     </div>
 
                     <div className="pt-6 border-t border-slate-100">
-                      <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-6">Pejabat Penandatangan (Kepala Dinas)</h3>
+                      <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-6">Kepala Dinas / Pimpinan</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nama Lengkap & Gelar</label>

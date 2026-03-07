@@ -51,4 +51,4 @@ export interface AgencyConfig {
   jabatanKepala: string;
 }
 
-export type ViewType = 'DASHBOARD' | 'DATA_PEGAWAI' | 'KONTROL_PANGKAT' | 'KONTROL_KGB' | 'KONTROL_PENSIUN' | 'AI_REPORT' | 'SETTINGS';
+export type ViewType = 'DASHBOARD' | 'DATA_PEGAWAI' | 'KONTROL_PANGKAT' | 'KONTROL_KGB' | 'KONTROL_PENSIUN' | 'AI_REPORT' | 'DATA_DINAS';

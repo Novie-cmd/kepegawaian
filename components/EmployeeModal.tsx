@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Employee, Golongan, AgencyConfig } from '../types';
 import { extractEmployeeDataFromImage } from '../services/geminiService';
 import { formatDate } from '../utils/dateUtils';
-import { formatRupiah } from '../utils/numberUtils';
+import { formatRupiah, terbilang } from '../utils/numberUtils';
 
 interface EmployeeModalProps {
   isOpen: boolean;
@@ -47,9 +47,9 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
              <img src={ntbLogoUrl} alt="Logo Instansi" className="h-32 w-auto object-contain block" crossOrigin="anonymous" />
           </div>
           <div className="flex-1 text-center pr-10">
-            <h1 className="text-[12px] font-normal uppercase tracking-[0.15em] leading-tight">{agencyConfig.namaPemerintah}</h1>
-            <h2 className="text-[17px] font-bold uppercase leading-tight mt-1 tracking-[0.05em] whitespace-nowrap">{agencyConfig.namaSkpd}</h2>
-            <h2 className="text-[17px] font-bold uppercase leading-tight tracking-[0.05em] whitespace-nowrap">{agencyConfig.namaSkpdPendek}</h2>
+            <h1 className="text-[15px] font-bold uppercase tracking-[0.15em] leading-tight">{agencyConfig.namaPemerintah}</h1>
+            <h2 className="text-[22px] font-bold uppercase leading-tight mt-1 tracking-[0.05em] whitespace-nowrap">{agencyConfig.namaSkpd}</h2>
+            <h2 className="text-[22px] font-bold uppercase leading-tight tracking-[0.05em] whitespace-nowrap">{agencyConfig.namaSkpdPendek}</h2>
             <p className="text-[10px] mt-2 font-sans font-normal tracking-wide">{agencyConfig.alamat}</p>
             <p className="text-[10px] font-sans font-normal tracking-wide">Telepon {agencyConfig.telepon}, Faksimile {agencyConfig.fax}</p>
           </div>
@@ -71,8 +71,10 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
         <div className="mb-6 text-[12px]">
           <p className="font-bold">Yth. Kepala Badan Pengelola Keuangan</p>
           <p className="font-bold ml-8">dan Aset Daerah Provinsi NTB</p>
-          <p className="ml-8 text-sm">di -</p>
-          <p className="ml-14 font-bold">Mataram</p>
+          <div className="ml-8 mt-2">
+            <p>di -</p>
+            <p className="ml-8 font-bold">Mataram</p>
+          </div>
         </div>
 
         <div className="text-[12px] text-justify space-y-4">
@@ -83,7 +85,13 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
             <div>2.</div><div>NIP</div><div>:</div><div className="font-bold">{formData.nip}</div>
             <div>3.</div><div>Pangkat/ Jabatan</div><div>:</div><div>{formData.golongan} / {formData.jabatan}</div>
             <div>4.</div><div>Unit Kerja</div><div>:</div><div className="font-bold uppercase">{formData.unitKerja || agencyConfig.namaSkpdPendek}</div>
-            <div>5.</div><div>Gaji Pokok Lama</div><div>:</div><div><span className="font-bold">Rp. {formData.gajiPokokLama || '-'}</span></div>
+            <div>5.</div><div>Gaji Pokok Lama</div><div>:</div>
+            <div>
+              <span className="font-bold">Rp. {formData.gajiPokokLama || '-'},-</span>
+              {formData.gajiPokokLama && (
+                <p className="italic text-[11px]">({terbilang(formData.gajiPokokLama)} Rupiah)</p>
+              )}
+            </div>
           </div>
 
           <p className="ml-10 italic font-medium">(Atas dasar SKP Terakhir tentang gaji / pangkat yang telah ditetapkan) :</p>
@@ -99,11 +107,22 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
           <p>Diberikan kenaikan gaji berkala hingga memperoleh :</p>
 
           <div className="grid grid-cols-[30px_170px_10px_1fr] gap-y-1 ml-4">
-            <div className="font-bold">6.</div><div className="font-bold">Gaji Pokok Baru</div><div className="font-bold">:</div><div className="font-bold">Rp. {formData.gajiPokokBaru || '-'}</div>
+            <div className="font-bold">6.</div><div className="font-bold">Gaji Pokok Baru</div><div className="font-bold">:</div>
+            <div>
+              <span className="font-bold">Rp. {formData.gajiPokokBaru || '-'},-</span>
+              {formData.gajiPokokBaru && (
+                <p className="italic text-[11px]">({terbilang(formData.gajiPokokBaru)} Rupiah)</p>
+              )}
+            </div>
             <div>7.</div><div>Berdasarkan Masa Kerja</div><div>:</div><div>{formData.masaKerjaBaru || '-'}</div>
             <div>8.</div><div>Dalam Golongan / Ruang</div><div>:</div><div>{formData.golonganBaru || formData.golongan}</div>
             <div className="font-bold">9.</div><div className="font-bold">Mulai Tanggal</div><div className="font-bold">:</div><div className="font-bold">{formData.tmtKgb ? formatDate(formData.tmtKgb) : '-'}</div>
+            <div>10.</div><div>Keterangan</div><div>:</div><div className="whitespace-pre-line">{formData.keterangan || '-'}</div>
           </div>
+        </div>
+
+        <div className="text-[12px] mt-6">
+          <p>Diharapkan agar sesuai dengan Peraturan Pemerintah Nomor 5 Tahun 2024 kepada Pegawai tersebut dapat dibayarkan penghasilannya berdasarkan gaji pokoknya yang baru.</p>
         </div>
 
         <div className="mt-12 flex justify-end">
@@ -115,6 +134,19 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
             <p className="font-medium">{agencyConfig.pangkatKepala}</p>
             <p>NIP. {agencyConfig.nipKepala}</p>
           </div>
+        </div>
+
+        <div className="mt-8 text-[11px] border-t border-slate-200 pt-4 print:border-none">
+          <p className="font-bold">Tembusan disampaikan kepada Yth. :</p>
+          <ol className="list-decimal ml-4 mt-1 space-y-0.5">
+            <li>Inspektur Inspektorat Provinsi NTB di Mataram;</li>
+            <li>Kepala Badan Kepegawaian Daerah Provinsi NTB di Mataram;</li>
+            <li>Kepala Badan Keuangan Dan Aset Daerah di Mataram;</li>
+            <li>Kepala TASPEN (PERSERO) Cabang Mataram di Mataram;</li>
+            <li>Pembuat Daftar Gaji pada {agencyConfig.namaSkpdPendek} di Mataram;</li>
+            <li>PNS yang bersangkutan;</li>
+            <li>Arsip.</li>
+          </ol>
         </div>
       </div>
     </div>
