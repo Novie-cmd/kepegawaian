@@ -24,7 +24,21 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
 
   return (
     <div id="print-area" className="fixed inset-0 z-[100] bg-slate-900/60 p-4 md:p-8 overflow-y-auto animate-fadeIn backdrop-blur-sm print:bg-white print:p-0 print:overflow-visible">
-      <div className="max-w-[850px] mx-auto bg-white shadow-2xl p-10 md:p-16 text-black font-serif relative leading-normal print:shadow-none print:max-w-none print:w-full print:p-0">
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+          @page {
+            size: legal;
+            margin: 1.5cm 2cm;
+          }
+          body {
+            -webkit-print-color-adjust: exact;
+          }
+        }
+        .font-times {
+          font-family: "Times New Roman", Times, serif;
+        }
+      `}} />
+      <div className="max-w-[850px] mx-auto bg-white shadow-2xl p-10 md:p-16 text-black font-times relative leading-normal print:shadow-none print:max-w-none print:w-full print:p-0">
         
         <div className="absolute top-4 right-4 flex space-x-3 no-print">
           <button 
@@ -56,19 +70,19 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
         </div>
         <div className="border-b-[1px] border-black mb-6"></div>
 
-        <div className="flex justify-between mb-6 text-[12px]">
+        <div className="flex justify-between mb-6 text-[12pt]">
           <div className="space-y-0.5">
-            <p><span className="inline-block w-16">Nomor</span>: 822.3 / {formData.nomorSkpTerakhir?.split('/')[1] || '021'} /{agencyConfig.namaSkpdPendek.split(' ')[0]}/2026</p>
-            <p><span className="inline-block w-16">Lamp.</span>: --</p>
-            <p><span className="inline-block w-16">Perihal</span>: <span className="font-bold underline">Kenaikan Gaji Berkala</span></p>
-            <p className="ml-16 font-bold uppercase">An. {formData.nama}</p>
+            <p><span className="inline-block w-20">Nomor</span>: 822.3 / {formData.nomorSkpTerakhir?.split('/')[1] || '021'} /{agencyConfig.namaSkpdPendek.split(' ')[0]}/2026</p>
+            <p><span className="inline-block w-20">Lamp.</span>: --</p>
+            <p><span className="inline-block w-20">Perihal</span>: <span className="font-bold underline">Kenaikan Gaji Berkala</span></p>
+            <p className="ml-20 font-bold uppercase">An. {formData.nama}</p>
           </div>
           <div className="text-right">
             <p>Mataram, <span className="font-bold">{formData.tglSuratKgb ? formatDate(formData.tglSuratKgb) : `${new Date().getDate()} ${['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'][new Date().getMonth()]} ${new Date().getFullYear()}`}</span></p>
           </div>
         </div>
 
-        <div className="mb-6 text-[12px]">
+        <div className="mb-6 text-[12pt]">
           <p className="font-bold">Yth. Kepala Badan Pengelola Keuangan</p>
           <p className="font-bold ml-8">dan Aset Daerah Provinsi NTB</p>
           <div className="ml-8 mt-2">
@@ -77,10 +91,10 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
           </div>
         </div>
 
-        <div className="text-[12px] text-justify space-y-4">
+        <div className="text-[12pt] text-justify space-y-4">
           <p>Dengan ini dipermaklumkan bahwa sehubungan dengan telah dipenuhinya masa kerja dan syarat-syarat lainnya kepada :</p>
           
-          <div className="grid grid-cols-[30px_170px_10px_1fr] gap-y-1 ml-4">
+          <div className="grid grid-cols-[30px_200px_10px_1fr] gap-y-1 ml-4">
             <div>1.</div><div>Nama/ Tanggal Lahir</div><div>:</div><div className="font-bold uppercase">{formData.nama} / {formData.tanggalLahir ? formatDate(formData.tanggalLahir).split(' ').join('-') : '-'}</div>
             <div>2.</div><div>NIP</div><div>:</div><div className="font-bold">{formData.nip}</div>
             <div>3.</div><div>Pangkat/ Jabatan</div><div>:</div><div>{formData.golongan} / {formData.jabatan}</div>
@@ -89,14 +103,14 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
             <div>
               <span className="font-bold">Rp. {formData.gajiPokokLama || '-'},-</span>
               {formData.gajiPokokLama && (
-                <p className="italic text-[11px]">({terbilang(formData.gajiPokokLama)} Rupiah)</p>
+                <p className="italic text-[11pt]">({terbilang(formData.gajiPokokLama)} Rupiah)</p>
               )}
             </div>
           </div>
 
           <p className="ml-10 italic font-medium">(Atas dasar SKP Terakhir tentang gaji / pangkat yang telah ditetapkan) :</p>
           
-          <div className="grid grid-cols-[60px_130px_10px_1fr] gap-y-0.5 ml-4">
+          <div className="grid grid-cols-[60px_140px_10px_1fr] gap-y-0.5 ml-4">
             <div></div><div>a. Oleh Pejabat</div><div>:</div><div className="uppercase">{agencyConfig.jabatanKepala} {agencyConfig.namaSkpdPendek}</div>
             <div></div><div>b. Tanggal</div><div>:</div><div>{formData.tglSkpTerakhir ? formatDate(formData.tglSkpTerakhir) : '-'}</div>
             <div></div><div>c. Nomor</div><div>:</div><div>{formData.nomorSkpTerakhir || '-'}</div>
@@ -106,12 +120,12 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
 
           <p>Diberikan kenaikan gaji berkala hingga memperoleh :</p>
 
-          <div className="grid grid-cols-[30px_170px_10px_1fr] gap-y-1 ml-4">
+          <div className="grid grid-cols-[30px_200px_10px_1fr] gap-y-1 ml-4">
             <div className="font-bold">6.</div><div className="font-bold">Gaji Pokok Baru</div><div className="font-bold">:</div>
             <div>
               <span className="font-bold">Rp. {formData.gajiPokokBaru || '-'},-</span>
               {formData.gajiPokokBaru && (
-                <p className="italic text-[11px]">({terbilang(formData.gajiPokokBaru)} Rupiah)</p>
+                <p className="italic text-[11pt]">({terbilang(formData.gajiPokokBaru)} Rupiah)</p>
               )}
             </div>
             <div>7.</div><div>Berdasarkan Masa Kerja</div><div>:</div><div>{formData.masaKerjaBaru || '-'}</div>
@@ -121,22 +135,22 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
           </div>
         </div>
 
-        <div className="text-[12px] mt-6">
+        <div className="text-[12pt] mt-6">
           <p>Diharapkan agar sesuai dengan Peraturan Pemerintah Nomor 5 Tahun 2024 kepada Pegawai tersebut dapat dibayarkan penghasilannya berdasarkan gaji pokoknya yang baru.</p>
         </div>
 
         <div className="mt-12 flex justify-end">
-          <div className="text-left w-[300px] text-[12px]">
+          <div className="text-left w-[350px] text-[12pt]">
             <p className="font-bold uppercase italic">a.n. GUBERNUR {agencyConfig.namaPemerintah.split(' ').slice(2).join(' ')}</p>
             <p className="font-bold uppercase ml-8">{agencyConfig.jabatanKepala},</p>
-            <div className="h-20"></div>
+            <div className="h-24"></div>
             <p className="font-bold underline uppercase tracking-tight">{agencyConfig.namaKepala}</p>
             <p className="font-medium">{agencyConfig.pangkatKepala}</p>
             <p>NIP. {agencyConfig.nipKepala}</p>
           </div>
         </div>
 
-        <div className="mt-8 text-[11px] border-t border-slate-200 pt-4 print:border-none">
+        <div className="mt-8 text-[11pt] border-t border-slate-200 pt-4 print:border-none">
           <p className="font-bold">Tembusan disampaikan kepada Yth. :</p>
           <ol className="list-decimal ml-4 mt-1 space-y-0.5">
             <li>Inspektur Inspektorat Provinsi NTB di Mataram;</li>
