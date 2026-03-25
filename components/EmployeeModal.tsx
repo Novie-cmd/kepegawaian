@@ -56,21 +56,21 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
           </button>
         </div>
 
-        <div className="flex items-center border-b-[3px] border-black pb-2 mb-1 relative print:mt-2 min-h-[150px]">
-          <div className="w-36 flex-shrink-0 flex justify-center items-center mr-6">
-             <img src={ntbLogoUrl} alt="Logo Instansi" className="h-32 w-auto object-contain block" crossOrigin="anonymous" />
+        <div className="flex items-center border-b-[3px] border-black pb-1 mb-1 relative print:mt-1 min-h-[120px]">
+          <div className="w-28 flex-shrink-0 flex justify-center items-center mr-6">
+             <img src={ntbLogoUrl} alt="Logo Instansi" className="h-24 w-auto object-contain block" crossOrigin="anonymous" />
           </div>
           <div className="flex-1 text-center pr-10">
             <h1 className="text-[15px] font-bold uppercase tracking-[0.15em] leading-tight">{agencyConfig.namaPemerintah}</h1>
             <h2 className="text-[22px] font-bold uppercase leading-tight mt-1 tracking-[0.05em] whitespace-nowrap">{agencyConfig.namaSkpd}</h2>
             <h2 className="text-[22px] font-bold uppercase leading-tight tracking-[0.05em] whitespace-nowrap">{agencyConfig.namaSkpdPendek}</h2>
-            <p className="text-[10px] mt-2 font-sans font-normal tracking-wide">{agencyConfig.alamat}</p>
+            <p className="text-[10px] mt-1 font-sans font-normal tracking-wide">{agencyConfig.alamat}</p>
             <p className="text-[10px] font-sans font-normal tracking-wide">Telepon {agencyConfig.telepon}, Faksimile {agencyConfig.fax}</p>
           </div>
         </div>
-        <div className="border-b-[1px] border-black mb-6"></div>
+        <div className="border-b-[1px] border-black mb-3"></div>
 
-        <div className="flex justify-between mb-6 text-[12pt]">
+        <div className="flex justify-between mb-3 text-[13pt]">
           <div className="space-y-0.5">
             <p><span className="inline-block w-20">Nomor</span>: 822.3 / {formData.nomorSkpTerakhir?.split('/')[1] || '021'} /{agencyConfig.namaSkpdPendek.split(' ')[0]}/2026</p>
             <p><span className="inline-block w-20">Lamp.</span>: --</p>
@@ -82,19 +82,19 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
           </div>
         </div>
 
-        <div className="mb-6 text-[12pt]">
+        <div className="mb-3 text-[13pt]">
           <p className="font-bold">Yth. Kepala Badan Pengelola Keuangan</p>
           <p className="font-bold ml-8">dan Aset Daerah Provinsi NTB</p>
-          <div className="ml-8 mt-2">
+          <div className="ml-8 mt-1">
             <p>di -</p>
             <p className="ml-8 font-bold">Mataram</p>
           </div>
         </div>
 
-        <div className="text-[12pt] text-justify space-y-4">
+        <div className="text-[13pt] text-justify space-y-1 leading-tight">
           <p>Dengan ini dipermaklumkan bahwa sehubungan dengan telah dipenuhinya masa kerja dan syarat-syarat lainnya kepada :</p>
           
-          <div className="grid grid-cols-[30px_200px_10px_1fr] gap-y-1 ml-4">
+          <div className="grid grid-cols-[30px_200px_10px_1fr] gap-y-0.5 ml-4">
             <div>1.</div><div>Nama/ Tanggal Lahir</div><div>:</div><div className="font-bold uppercase">{formData.nama} / {formData.tanggalLahir ? formatDate(formData.tanggalLahir).split(' ').join('-') : '-'}</div>
             <div>2.</div><div>NIP</div><div>:</div><div className="font-bold">{formData.nip}</div>
             <div>3.</div><div>Pangkat/ Jabatan</div><div>:</div><div>{formData.golongan} / {formData.jabatan}</div>
@@ -120,7 +120,7 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
 
           <p>Diberikan kenaikan gaji berkala hingga memperoleh :</p>
 
-          <div className="grid grid-cols-[30px_200px_10px_1fr] gap-y-1 ml-4">
+          <div className="grid grid-cols-[30px_200px_10px_1fr] gap-y-0.5 ml-4">
             <div className="font-bold">6.</div><div className="font-bold">Gaji Pokok Baru</div><div className="font-bold">:</div>
             <div>
               <span className="font-bold">Rp. {formData.gajiPokokBaru || '-'},-</span>
@@ -135,22 +135,22 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
           </div>
         </div>
 
-        <div className="text-[12pt] mt-6">
+        <div className="text-[13pt] mt-3 leading-tight">
           <p>Diharapkan agar sesuai dengan Peraturan Pemerintah Nomor 5 Tahun 2024 kepada Pegawai tersebut dapat dibayarkan penghasilannya berdasarkan gaji pokoknya yang baru.</p>
         </div>
 
-        <div className="mt-12 flex justify-end">
-          <div className="text-left w-[350px] text-[12pt]">
+        <div className="mt-6 flex justify-end">
+          <div className="text-left w-[350px] text-[13pt] leading-tight">
             <p className="font-bold uppercase italic">a.n. GUBERNUR {agencyConfig.namaPemerintah.split(' ').slice(2).join(' ')}</p>
             <p className="font-bold uppercase ml-8">{agencyConfig.jabatanKepala},</p>
-            <div className="h-24"></div>
+            <div className="h-16"></div>
             <p className="font-bold underline uppercase tracking-tight">{agencyConfig.namaKepala}</p>
             <p className="font-medium">{agencyConfig.pangkatKepala}</p>
             <p>NIP. {agencyConfig.nipKepala}</p>
           </div>
         </div>
 
-        <div className="mt-8 text-[11pt] border-t border-slate-200 pt-4 print:border-none">
+        <div className="mt-2 text-[11pt] border-t border-slate-200 pt-2 print:border-none">
           <p className="font-bold">Tembusan disampaikan kepada Yth. :</p>
           <ol className="list-decimal ml-4 mt-1 space-y-0.5">
             <li>Inspektur Inspektorat Provinsi NTB di Mataram;</li>
