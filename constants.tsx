@@ -4,12 +4,12 @@ import { Employee, Golongan, AgencyConfig } from './types';
 
 export const DEFAULT_AGENCY_CONFIG: AgencyConfig = {
   namaPemerintah: 'Pemerintah Provinsi Nusa Tenggara Barat',
-  namaSkpd: 'Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu',
-  namaSkpdPendek: 'DPMPTSP NTB',
+  namaSkpd: 'Badan Kesatuan Bangsa dan Politik Dalam Negeri',
+  namaSkpdPendek: 'KESBANGPOLDAGRI NTB',
   alamat: 'Jalan Udayana No. 4 Selaparang. Kota Mataram, Nusa Tenggara Barat 83122',
   telepon: '(0370) 631060 - 632632',
   fax: '(0370) 6634926',
-  email: 'dpmptsp@ntbprov.go.id',
+  email: 'kesbangpoldagri@ntbprov.go.id',
   namaKepala: 'H. Mohammad Rum, MT',
   nipKepala: '19661231 199403 1 012',
   pangkatKepala: 'Pembina Utama Madya',
@@ -26,7 +26,7 @@ export const MOCK_EMPLOYEES: Employee[] = [
     tmtGolongan: '2021-04-01',
     tmtKgb: '2023-10-01',
     tanggalLahir: '1985-01-01',
-    unitKerja: 'Bidang Tata Ruang - DPMPTSP',
+    unitKerja: 'Bidang Tata Ruang - KESBANGPOLDAGRI',
     avatar: 'https://i.pravatar.cc/150?u=ahmad'
   },
   {
@@ -38,7 +38,7 @@ export const MOCK_EMPLOYEES: Employee[] = [
     tmtGolongan: '2020-10-01',
     tmtKgb: '2022-12-01',
     tanggalLahir: '1992-05-12',
-    unitKerja: 'Sekretariat - DPMPTSP',
+    unitKerja: 'Sekretariat - KESBANGPOLDAGRI',
     avatar: 'https://i.pravatar.cc/150?u=siti'
   },
   {
@@ -50,7 +50,7 @@ export const MOCK_EMPLOYEES: Employee[] = [
     tmtGolongan: '2019-04-01',
     tmtKgb: '2023-01-01',
     tanggalLahir: '1970-08-20',
-    unitKerja: 'Bidang Perizinan - DPMPTSP',
+    unitKerja: 'Bidang Perizinan - KESBANGPOLDAGRI',
     avatar: 'https://i.pravatar.cc/150?u=bambang'
   }
 ];

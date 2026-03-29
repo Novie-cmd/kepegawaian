@@ -38,7 +38,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
             <div className="w-20 h-20 bg-indigo-600 rounded-[2rem] flex items-center justify-center font-black text-4xl text-white mx-auto shadow-xl shadow-indigo-200">H</div>
             <div className="space-y-1">
               <h1 className="text-3xl font-black text-slate-900 tracking-tight">HR-Pro Login</h1>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">Dashboard DPMPTSP Prov. NTB</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">Dashboard KESBANGPOLDAGRI PROV. NTB</p>
             </div>
           </div>
 
