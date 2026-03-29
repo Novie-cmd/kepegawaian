@@ -31,26 +31,7 @@ export interface Employee {
   gajiPokokBaru?: string;
   masaKerjaBaru?: string;
   golonganBaru?: string;
-  tglSuratKgb?: string;
   keterangan?: string;
-  uid?: string;
 }
 
-export interface AgencyConfig {
-  namaPemerintah: string;
-  namaSkpd: string;
-  namaSkpdPendek: string;
-  alamat: string;
-  telepon: string;
-  fax: string;
-  website?: string;
-  email?: string;
-  logoBase64?: string;
-  namaKepala: string;
-  nipKepala: string;
-  pangkatKepala: string;
-  jabatanKepala: string;
-  uid?: string;
-}
-
-export type ViewType = 'DASHBOARD' | 'DATA_PEGAWAI' | 'KONTROL_PANGKAT' | 'KONTROL_KGB' | 'KONTROL_PENSIUN' | 'AI_REPORT' | 'DATA_DINAS';
+export type ViewType = 'DASHBOARD' | 'DATA_PEGAWAI' | 'KONTROL_PANGKAT' | 'KONTROL_KGB' | 'KONTROL_PENSIUN' | 'AI_REPORT';

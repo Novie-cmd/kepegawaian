@@ -1,28 +1,14 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { ViewType, Employee, AgencyConfig } from './types';
-import { NAV_ITEMS, MOCK_EMPLOYEES, DEFAULT_AGENCY_CONFIG } from './constants';
+import { ViewType, Employee } from './types';
+import { NAV_ITEMS, MOCK_EMPLOYEES } from './constants';
 import StatCard from './components/StatCard';
 import EmployeeTable from './components/EmployeeTable';
 import EmployeeModal from './components/EmployeeModal';
 import LoginView from './components/LoginView';
 import { getNextPromotion, getNextKgb, getRetirementDate, isNear, isDueInPeriod, isDueSoon, parseDateString } from './utils/dateUtils';
 import { getAIAnalysis } from './services/geminiService';
-import { 
-  db, 
-  auth, 
-  onAuthStateChanged, 
-  onSnapshot, 
-  collection, 
-  doc, 
-  setDoc, 
-  deleteDoc, 
-  query, 
-  where, 
-  OperationType, 
-  handleFirestoreError,
-  signOut
-} from './firebase';
+import { supabase, isSupabaseConfigured } from './services/supabaseClient';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 const MONTHS = [
@@ -34,10 +20,10 @@ const DEFAULT_LOGO = "https://upload.wikimedia.org/wikipedia/commons/0/07/Coat_o
 
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [isAuthReady, setIsAuthReady] = useState<boolean>(false);
   const [currentView, setCurrentView] = useState<ViewType>('DASHBOARD');
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
+  const [dbMode, setDbMode] = useState<'CLOUD' | 'LOCAL'>('LOCAL');
   const [aiReport, setAiReport] = useState<string>('');
   const [isLoadingAi, setIsLoadingAi] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -45,7 +31,6 @@ const App: React.FC = () => {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'info' | 'error' } | null>(null);
   const [deptLogo, setDeptLogo] = useState<string>(DEFAULT_LOGO);
-  const [agencyConfig, setAgencyConfig] = useState<AgencyConfig>(DEFAULT_AGENCY_CONFIG);
   const [lastSync, setLastSync] = useState<string>('');
   
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -55,59 +40,33 @@ const App: React.FC = () => {
   const [filterYear, setFilterYear] = useState<number>(new Date().getFullYear());
 
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      setIsAuthenticated(!!user);
-      setIsAuthReady(true);
-    });
-
-    return () => unsubscribeAuth();
+    const session = sessionStorage.getItem('hr_pro_auth');
+    if (session === 'true') {
+      setIsAuthenticated(true);
+    }
+    
+    const savedLogo = localStorage.getItem('dept_logo_base64');
+    if (savedLogo) {
+      setDeptLogo(savedLogo);
+    }
   }, []);
 
   useEffect(() => {
-    if (!isAuthenticated || !auth.currentUser) return;
-
-    setIsLoadingData(true);
-    
-    // Listen to Employees
-    const qEmployees = query(collection(db, 'employees'), where('uid', '==', auth.currentUser.uid));
-    const unsubscribeEmployees = onSnapshot(qEmployees, (snapshot) => {
-      const emps = snapshot.docs.map(doc => doc.data() as Employee);
-      setEmployees(emps);
-      setIsLoadingData(false);
-      setLastSync(new Date().toLocaleTimeString('id-ID'));
-    }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, 'employees');
-    });
-
-    // Listen to Agency Config
-    const qConfig = query(collection(db, 'agency_configs'), where('uid', '==', auth.currentUser.uid));
-    const unsubscribeConfig = onSnapshot(qConfig, (snapshot) => {
-      if (!snapshot.empty) {
-        setAgencyConfig(snapshot.docs[0].data() as AgencyConfig);
-      }
-    }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, 'agency_configs');
-    });
-
-    return () => {
-      unsubscribeEmployees();
-      unsubscribeConfig();
-    };
+    if (isAuthenticated) {
+      loadInitialData();
+    }
   }, [isAuthenticated]);
 
   const handleLogin = (status: boolean) => {
     if (status) {
       setIsAuthenticated(true);
+      sessionStorage.setItem('hr_pro_auth', 'true');
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      setIsAuthenticated(false);
-    } catch (err) {
-      console.error("Logout error:", err);
-    }
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    sessionStorage.removeItem('hr_pro_auth');
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -119,54 +78,97 @@ const App: React.FC = () => {
       const base64 = reader.result as string;
       setDeptLogo(base64);
       localStorage.setItem('dept_logo_base64', base64);
-      
-      // Update config as well
-      const updatedConfig = { ...agencyConfig, logoBase64: base64 };
-      setAgencyConfig(updatedConfig);
-      localStorage.setItem('agency_config', JSON.stringify(updatedConfig));
-      
       setToast({ message: 'Logo instansi diperbarui!', type: 'success' });
       setTimeout(() => setToast(null), 3000);
     };
     reader.readAsDataURL(file);
   };
 
-  const handleSaveConfig = async (newConfig: AgencyConfig) => {
-    if (!auth.currentUser) return;
+  const loadInitialData = async () => {
+    setIsLoadingData(true);
     
-    try {
-      const configWithUid = { ...newConfig, uid: auth.currentUser.uid };
-      // Use a fixed ID for the user's config or search for existing
-      const configId = auth.currentUser.uid; 
-      await setDoc(doc(db, 'agency_configs', configId), configWithUid);
-      
-      setAgencyConfig(configWithUid);
-      setToast({ message: 'Profil instansi berhasil diperbarui!', type: 'success' });
-    } catch (err) {
-      handleFirestoreError(err, OperationType.WRITE, 'agency_configs');
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('employees')
+          .select('*')
+          .order('nama', { ascending: true });
+
+        if (error) throw error;
+        
+        setEmployees(data || []);
+        setDbMode('CLOUD');
+        setLastSync(new Date().toLocaleTimeString('id-ID'));
+        setToast({ message: 'Data Online Berhasil Disinkronkan', type: 'success' });
+      } catch (err: any) {
+        console.warn("Koneksi Cloud bermasalah:", err.message);
+        setEmployees(MOCK_EMPLOYEES);
+        setDbMode('LOCAL');
+      }
+    } else {
+      setEmployees(MOCK_EMPLOYEES);
+      setDbMode('LOCAL');
     }
+    
+    setIsLoadingData(false);
     setTimeout(() => setToast(null), 3000);
   };
 
-  const handleSaveEmployee = async (emp: Employee) => {
-    if (!auth.currentUser) return;
-
+  const fetchEmployees = async () => {
+    if (!supabase || dbMode === 'LOCAL') return;
     try {
-      const empWithUid = { ...emp, uid: auth.currentUser.uid };
-      await setDoc(doc(db, 'employees', emp.id), empWithUid);
-      setToast({ message: 'Berhasil disimpan ke Cloud!', type: 'success' });
-    } catch (err) {
-      handleFirestoreError(err, OperationType.WRITE, 'employees');
+      const { data, error } = await supabase
+        .from('employees')
+        .select('*')
+        .order('nama', { ascending: true });
+
+      if (error) throw error;
+      setEmployees(data || []);
+      setLastSync(new Date().toLocaleTimeString('id-ID'));
+    } catch (err: any) {
+      console.error("Sinkronisasi gagal:", err.message);
+    }
+  };
+
+  const handleSaveEmployee = async (emp: Employee) => {
+    if (dbMode === 'CLOUD' && supabase) {
+      try {
+        const payload = { ...emp };
+        delete (payload as any).avatar;
+
+        let result;
+        if (selectedEmployee) {
+          result = await supabase.from('employees').update(payload).eq('id', emp.id);
+        } else {
+          result = await supabase.from('employees').insert([payload]);
+        }
+        
+        if (result.error) throw result.error;
+        await fetchEmployees();
+        setToast({ message: 'Berhasil disimpan ke Cloud (Terlihat oleh semua staf)!', type: 'success' });
+      } catch (err: any) {
+        setToast({ message: 'Gagal simpan ke cloud: ' + err.message, type: 'error' });
+      }
+    } else {
+      if (selectedEmployee) {
+        setEmployees(prev => prev.map(e => e.id === emp.id ? emp : e));
+      } else {
+        setEmployees(prev => [emp, ...prev]);
+      }
+      setToast({ message: 'Data disimpan di memori lokal', type: 'info' });
     }
     setTimeout(() => setToast(null), 3000);
   };
 
   const handleDeleteEmployee = async (id: string) => {
-    try {
-      await deleteDoc(doc(db, 'employees', id));
-      setToast({ message: 'Data dihapus dari sistem online', type: 'success' });
-    } catch (err) {
-      handleFirestoreError(err, OperationType.DELETE, 'employees');
+    if (dbMode === 'CLOUD' && supabase) {
+      try {
+        await supabase.from('employees').delete().eq('id', id);
+        await fetchEmployees();
+        setToast({ message: 'Data dihapus dari sistem online', type: 'success' });
+      } catch (err) {}
+    } else {
+      setEmployees(prev => prev.filter(e => e.id !== id));
     }
     setTimeout(() => setToast(null), 3000);
   };
@@ -224,12 +226,6 @@ const App: React.FC = () => {
     return years;
   }, []);
 
-  if (!isAuthReady) return (
-    <div className="flex items-center justify-center h-screen bg-slate-900">
-      <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-    </div>
-  );
-
   if (!isAuthenticated) return <LoginView onLogin={handleLogin} />;
 
   return (
@@ -239,16 +235,16 @@ const App: React.FC = () => {
           <div className="w-10 h-10 bg-indigo-500 rounded-2xl flex items-center justify-center font-black text-2xl">H</div>
           <div>
             <span className="text-xl font-black tracking-tight block">HR-Pro</span>
-            <span className="text-[9px] text-slate-400 font-bold tracking-widest uppercase">{agencyConfig.namaSkpdPendek}</span>
+            <span className="text-[9px] text-slate-400 font-bold tracking-widest uppercase">DPMPTSP NTB</span>
           </div>
         </div>
         
         <div className="px-8 py-4 space-y-3">
-           <div className={`flex items-center space-x-2 px-4 py-2 rounded-xl border text-[9px] font-black uppercase tracking-widest ${isAuthenticated ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-orange-500/10 border-orange-500/20 text-orange-400'}`}>
-              <div className={`w-2 h-2 rounded-full ${isAuthenticated ? 'bg-emerald-500 animate-pulse' : 'bg-orange-500'}`}></div>
-              <span>Status: {isAuthenticated ? 'Online & Terbagi' : 'Terputus'}</span>
+           <div className={`flex items-center space-x-2 px-4 py-2 rounded-xl border text-[9px] font-black uppercase tracking-widest ${dbMode === 'CLOUD' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-orange-500/10 border-orange-500/20 text-orange-400'}`}>
+              <div className={`w-2 h-2 rounded-full ${dbMode === 'CLOUD' ? 'bg-emerald-500 animate-pulse' : 'bg-orange-500'}`}></div>
+              <span>Status: {dbMode === 'CLOUD' ? 'Online & Terbagi' : 'Mode Offline'}</span>
            </div>
-           {isAuthenticated && (
+           {dbMode === 'CLOUD' && (
              <div className="px-4 text-[8px] text-slate-500 font-bold uppercase tracking-widest">
                 Sinkron Terakhir: {lastSync}
              </div>
@@ -292,12 +288,12 @@ const App: React.FC = () => {
         <header className="bg-white border-b border-gray-100 px-10 py-8 flex items-center justify-between z-10 shadow-sm">
           <div>
             <h1 className="text-3xl font-black text-slate-900 tracking-tight">{NAV_ITEMS.find(n => n.id === currentView)?.label}</h1>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Sistem Kolaborasi Kepegawaian (Firebase)</p>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Sistem Kolaborasi Kepegawaian</p>
           </div>
           <div className="flex items-center space-x-6">
             <button 
-              onClick={() => { setToast({message: 'Data tersinkronisasi otomatis', type: 'info'}); setTimeout(()=>setToast(null), 2000); }}
-              title="Status Sinkronisasi"
+              onClick={loadInitialData}
+              title="Refresh Data Online"
               className="p-3.5 bg-slate-50 text-slate-400 hover:text-indigo-600 rounded-2xl border border-slate-100 hover:border-indigo-100 transition-all"
             >
               <svg className={`w-5 h-5 ${isLoadingData ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
@@ -379,7 +375,7 @@ const App: React.FC = () => {
                   <div className="flex justify-between items-center">
                     <div>
                       <h2 className="text-2xl font-black text-slate-900 tracking-tight">Database Pusat</h2>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Terhubung: Cloud Firebase</p>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Terhubung: {dbMode === 'CLOUD' ? 'Cloud NTB' : 'Internal'}</p>
                     </div>
                     <div className="flex items-center space-x-3">
                       <input type="file" ref={logoInputRef} onChange={handleLogoUpload} className="hidden" accept=".ico,.png,.jpg,.jpeg" />
@@ -441,151 +437,6 @@ const App: React.FC = () => {
                   )}
                 </div>
               )}
-
-              {currentView === 'DATA_DINAS' && (
-                <div className="max-w-4xl mx-auto space-y-10 animate-fadeIn">
-                  <div className="bg-white p-10 rounded-[2.5rem] shadow-xl border border-white space-y-8">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center">
-                          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                        </div>
-                        <div>
-                          <h2 className="text-2xl font-black text-slate-900 tracking-tight">Data Dinas / Instansi</h2>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Kelola identitas dan logo SKPD Anda</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex flex-col items-center space-y-2">
-                        <div className="w-24 h-24 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden relative group">
-                          {deptLogo ? (
-                            <img src={deptLogo} alt="Logo Dinas" className="w-full h-full object-contain p-2" />
-                          ) : (
-                            <svg className="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                          )}
-                          <button 
-                            onClick={() => logoInputRef.current?.click()}
-                            className="absolute inset-0 bg-indigo-600/80 text-white opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-[8px] font-black uppercase tracking-tighter"
-                          >
-                            <svg className="w-4 h-4 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                            Ganti Logo
-                          </button>
-                          <input type="file" ref={logoInputRef} onChange={handleLogoUpload} className="hidden" accept="image/*" />
-                        </div>
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Logo Instansi</span>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nama Pemerintah (Baris 1 Kop)</label>
-                        <input 
-                          type="text" 
-                          value={agencyConfig.namaPemerintah || ''} 
-                          onChange={(e) => setAgencyConfig({...agencyConfig, namaPemerintah: e.target.value})}
-                          className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nama Dinas / Instansi (Baris 2 Kop)</label>
-                        <input 
-                          type="text" 
-                          value={agencyConfig.namaSkpd || ''} 
-                          onChange={(e) => setAgencyConfig({...agencyConfig, namaSkpd: e.target.value})}
-                          className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nama SKPD (Baris 3 Kop)</label>
-                        <input 
-                          type="text" 
-                          value={agencyConfig.namaSkpdPendek || ''} 
-                          onChange={(e) => setAgencyConfig({...agencyConfig, namaSkpdPendek: e.target.value})}
-                          className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Alamat Lengkap</label>
-                        <input 
-                          type="text" 
-                          value={agencyConfig.alamat || ''} 
-                          onChange={(e) => setAgencyConfig({...agencyConfig, alamat: e.target.value})}
-                          className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Telepon</label>
-                        <input 
-                          type="text" 
-                          value={agencyConfig.telepon || ''} 
-                          onChange={(e) => setAgencyConfig({...agencyConfig, telepon: e.target.value})}
-                          className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Fax</label>
-                        <input 
-                          type="text" 
-                          value={agencyConfig.fax || ''} 
-                          onChange={(e) => setAgencyConfig({...agencyConfig, fax: e.target.value})}
-                          className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="pt-6 border-t border-slate-100">
-                      <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-6">Kepala Dinas / Pimpinan</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nama Lengkap & Gelar</label>
-                          <input 
-                            type="text" 
-                            value={agencyConfig.namaKepala || ''} 
-                            onChange={(e) => setAgencyConfig({...agencyConfig, namaKepala: e.target.value})}
-                            className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">NIP</label>
-                          <input 
-                            type="text" 
-                            value={agencyConfig.nipKepala || ''} 
-                            onChange={(e) => setAgencyConfig({...agencyConfig, nipKepala: e.target.value})}
-                            className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Pangkat / Golongan</label>
-                          <input 
-                            type="text" 
-                            value={agencyConfig.pangkatKepala || ''} 
-                            onChange={(e) => setAgencyConfig({...agencyConfig, pangkatKepala: e.target.value})}
-                            className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Jabatan</label>
-                          <input 
-                            type="text" 
-                            value={agencyConfig.jabatanKepala || ''} 
-                            onChange={(e) => setAgencyConfig({...agencyConfig, jabatanKepala: e.target.value})}
-                            className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex justify-end pt-6">
-                      <button 
-                        onClick={() => handleSaveConfig(agencyConfig)}
-                        className="bg-indigo-600 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all"
-                      >
-                        Simpan Perubahan
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </div>
@@ -598,7 +449,6 @@ const App: React.FC = () => {
         initialData={selectedEmployee} 
         onDelete={handleDeleteEmployee} 
         deptLogo={deptLogo}
-        agencyConfig={agencyConfig}
       />
     </div>
   );

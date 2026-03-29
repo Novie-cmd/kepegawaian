@@ -1,20 +1,6 @@
 
 import React from 'react';
-import { Employee, Golongan, AgencyConfig } from './types';
-
-export const DEFAULT_AGENCY_CONFIG: AgencyConfig = {
-  namaPemerintah: 'Pemerintah Provinsi Nusa Tenggara Barat',
-  namaSkpd: 'Badan Kesatuan Bangsa dan Politik Dalam Negeri',
-  namaSkpdPendek: 'KESBANGPOLDAGRI NTB',
-  alamat: 'Jalan Udayana No. 4 Selaparang. Kota Mataram, Nusa Tenggara Barat 83122',
-  telepon: '(0370) 631060 - 632632',
-  fax: '(0370) 6634926',
-  email: 'kesbangpoldagri@ntbprov.go.id',
-  namaKepala: 'H. Mohammad Rum, MT',
-  nipKepala: '19661231 199403 1 012',
-  pangkatKepala: 'Pembina Utama Madya',
-  jabatanKepala: 'Kepala Dinas'
-};
+import { Employee, Golongan } from './types';
 
 export const MOCK_EMPLOYEES: Employee[] = [
   {
@@ -26,7 +12,7 @@ export const MOCK_EMPLOYEES: Employee[] = [
     tmtGolongan: '2021-04-01',
     tmtKgb: '2023-10-01',
     tanggalLahir: '1985-01-01',
-    unitKerja: 'Bidang Tata Ruang - KESBANGPOLDAGRI',
+    unitKerja: 'Bidang Tata Ruang - DPMPTSP',
     avatar: 'https://i.pravatar.cc/150?u=ahmad'
   },
   {
@@ -38,7 +24,7 @@ export const MOCK_EMPLOYEES: Employee[] = [
     tmtGolongan: '2020-10-01',
     tmtKgb: '2022-12-01',
     tanggalLahir: '1992-05-12',
-    unitKerja: 'Sekretariat - KESBANGPOLDAGRI',
+    unitKerja: 'Sekretariat - DPMPTSP',
     avatar: 'https://i.pravatar.cc/150?u=siti'
   },
   {
@@ -50,7 +36,7 @@ export const MOCK_EMPLOYEES: Employee[] = [
     tmtGolongan: '2019-04-01',
     tmtKgb: '2023-01-01',
     tanggalLahir: '1970-08-20',
-    unitKerja: 'Bidang Perizinan - KESBANGPOLDAGRI',
+    unitKerja: 'Bidang Perizinan - DPMPTSP',
     avatar: 'https://i.pravatar.cc/150?u=bambang'
   }
 ];
@@ -73,8 +59,5 @@ export const NAV_ITEMS = [
   )},
   { id: 'AI_REPORT', label: 'Laporan AI Gemini', icon: (
     <svg className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
-  )},
-  { id: 'DATA_DINAS', label: 'Data Dinas', icon: (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
   )},
 ];

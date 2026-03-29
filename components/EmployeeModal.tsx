@@ -1,9 +1,9 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Employee, Golongan, AgencyConfig } from '../types';
+import { Employee, Golongan } from '../types';
 import { extractEmployeeDataFromImage } from '../services/geminiService';
 import { formatDate } from '../utils/dateUtils';
-import { formatRupiah, terbilang } from '../utils/numberUtils';
+import { formatRupiah } from '../utils/numberUtils';
 
 interface EmployeeModalProps {
   isOpen: boolean;
@@ -12,10 +12,9 @@ interface EmployeeModalProps {
   onDelete?: (id: string) => void;
   initialData?: Employee | null;
   deptLogo?: string;
-  agencyConfig: AgencyConfig;
 }
 
-const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (show: boolean) => void, deptLogo?: string, agencyConfig: AgencyConfig }> = ({ formData, setShowPreview, deptLogo, agencyConfig }) => {
+const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (show: boolean) => void, deptLogo?: string }> = ({ formData, setShowPreview, deptLogo }) => {
   const handlePrint = () => {
     window.print();
   };
@@ -24,21 +23,7 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
 
   return (
     <div id="print-area" className="fixed inset-0 z-[100] bg-slate-900/60 p-4 md:p-8 overflow-y-auto animate-fadeIn backdrop-blur-sm print:bg-white print:p-0 print:overflow-visible">
-      <style dangerouslySetInnerHTML={{ __html: `
-        @media print {
-          @page {
-            size: legal;
-            margin: 1.5cm 2cm;
-          }
-          body {
-            -webkit-print-color-adjust: exact;
-          }
-        }
-        .font-times {
-          font-family: "Times New Roman", Times, serif;
-        }
-      `}} />
-      <div className="max-w-[850px] mx-auto bg-white shadow-2xl p-10 md:p-16 text-black font-times relative leading-normal print:shadow-none print:max-w-none print:w-full print:p-0">
+      <div className="max-w-[850px] mx-auto bg-white shadow-2xl p-10 md:p-16 text-black font-serif relative leading-normal print:shadow-none print:max-w-none print:w-full print:p-0">
         
         <div className="absolute top-4 right-4 flex space-x-3 no-print">
           <button 
@@ -56,62 +41,53 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
           </button>
         </div>
 
-        <div className="flex items-center border-b-[3px] border-black pb-1 mb-1 relative print:mt-1 min-h-[120px]">
-          <div className="w-28 flex-shrink-0 flex justify-center items-center mr-6">
-             <img src={ntbLogoUrl} alt="Logo Instansi" className="h-24 w-auto object-contain block" crossOrigin="anonymous" />
+        <div className="flex items-center border-b-[3px] border-black pb-2 mb-1 relative print:mt-2 min-h-[150px]">
+          <div className="w-36 flex-shrink-0 flex justify-center items-center mr-6">
+             <img src={ntbLogoUrl} alt="Logo Instansi" className="h-32 w-auto object-contain block" crossOrigin="anonymous" />
           </div>
           <div className="flex-1 text-center pr-10">
-            <h1 className="text-[15px] font-bold uppercase tracking-[0.15em] leading-tight">{agencyConfig.namaPemerintah}</h1>
-            <h2 className="text-[22px] font-bold uppercase leading-tight mt-1 tracking-[0.05em] whitespace-nowrap">{agencyConfig.namaSkpd}</h2>
-            <h2 className="text-[22px] font-bold uppercase leading-tight tracking-[0.05em] whitespace-nowrap">{agencyConfig.namaSkpdPendek}</h2>
-            <p className="text-[10px] mt-1 font-sans font-normal tracking-wide">{agencyConfig.alamat}</p>
-            <p className="text-[10px] font-sans font-normal tracking-wide">Telepon {agencyConfig.telepon}, Faksimile {agencyConfig.fax}</p>
+            <h1 className="text-[15px] font-normal uppercase tracking-tight leading-tight">Pemerintah Provinsi Nusa Tenggara Barat</h1>
+            <h2 className="text-[20px] font-bold uppercase leading-tight mt-1 whitespace-nowrap">Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu</h2>
+            <p className="text-[10px] mt-2 font-sans font-normal">Jalan Udayana No. 4 Selaparang. Kota Mataram, Nusa Tenggara Barat 83122</p>
+            <p className="text-[10px] font-sans font-normal">Telepon (0370) 631060 - 632632, Faksimile (0370) 6634926</p>
           </div>
         </div>
-        <div className="border-b-[1px] border-black mb-3"></div>
+        <div className="border-b-[1px] border-black mb-6"></div>
 
-        <div className="flex justify-between mb-3 text-[13pt]">
+        <div className="flex justify-between mb-6 text-[12px]">
           <div className="space-y-0.5">
-            <p><span className="inline-block w-20">Nomor</span>: 822.3 / {formData.nomorSkpTerakhir?.split('/')[1] || '021'} /{agencyConfig.namaSkpdPendek.split(' ')[0]}/2026</p>
-            <p><span className="inline-block w-20">Lamp.</span>: --</p>
-            <p><span className="inline-block w-20">Perihal</span>: <span className="font-bold underline">Kenaikan Gaji Berkala</span></p>
-            <p className="ml-20 font-bold uppercase">An. {formData.nama}</p>
+            <p><span className="inline-block w-16">Nomor</span>: 822.3 / {formData.nomorSkpTerakhir?.split('/')[1] || '021'} /DPMPTSP/2026</p>
+            <p><span className="inline-block w-16">Lamp.</span>: --</p>
+            <p><span className="inline-block w-16">Perihal</span>: <span className="font-bold underline">Kenaikan Gaji Berkala</span></p>
+            <p className="ml-16 font-bold uppercase">An. {formData.nama}</p>
           </div>
           <div className="text-right">
-            <p>Mataram, <span className="font-bold">{formData.tglSuratKgb ? formatDate(formData.tglSuratKgb) : `${new Date().getDate()} ${['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'][new Date().getMonth()]} ${new Date().getFullYear()}`}</span></p>
+            <p>Mataram, <span className="font-bold">{new Date().getDate()} {['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'][new Date().getMonth()]} {new Date().getFullYear()}</span></p>
           </div>
         </div>
 
-        <div className="mb-3 text-[13pt]">
+        <div className="mb-6 text-[12px]">
           <p className="font-bold">Yth. Kepala Badan Pengelola Keuangan</p>
           <p className="font-bold ml-8">dan Aset Daerah Provinsi NTB</p>
-          <div className="ml-8 mt-1">
-            <p>di -</p>
-            <p className="ml-8 font-bold">Mataram</p>
-          </div>
+          <p className="ml-8 text-sm">di -</p>
+          <p className="ml-14 font-bold">Mataram</p>
         </div>
 
-        <div className="text-[13pt] text-justify space-y-1 leading-tight">
+        <div className="text-[12px] text-justify space-y-4">
           <p>Dengan ini dipermaklumkan bahwa sehubungan dengan telah dipenuhinya masa kerja dan syarat-syarat lainnya kepada :</p>
           
-          <div className="grid grid-cols-[30px_200px_10px_1fr] gap-y-0.5 ml-4">
+          <div className="grid grid-cols-[30px_170px_10px_1fr] gap-y-1 ml-4">
             <div>1.</div><div>Nama/ Tanggal Lahir</div><div>:</div><div className="font-bold uppercase">{formData.nama} / {formData.tanggalLahir ? formatDate(formData.tanggalLahir).split(' ').join('-') : '-'}</div>
             <div>2.</div><div>NIP</div><div>:</div><div className="font-bold">{formData.nip}</div>
             <div>3.</div><div>Pangkat/ Jabatan</div><div>:</div><div>{formData.golongan} / {formData.jabatan}</div>
-            <div>4.</div><div>Unit Kerja</div><div>:</div><div className="font-bold uppercase">{formData.unitKerja || agencyConfig.namaSkpdPendek}</div>
-            <div>5.</div><div>Gaji Pokok Lama</div><div>:</div>
-            <div>
-              <span className="font-bold">Rp. {formData.gajiPokokLama || '-'},-</span>
-              {formData.gajiPokokLama && (
-                <p className="italic text-[11pt]">({terbilang(formData.gajiPokokLama)} Rupiah)</p>
-              )}
-            </div>
+            <div>4.</div><div>Unit Kerja</div><div>:</div><div className="font-bold uppercase">{formData.unitKerja || 'DPMPTSP PROV. NTB'}</div>
+            <div>5.</div><div>Gaji Pokok Lama</div><div>:</div><div><span className="font-bold">Rp. {formData.gajiPokokLama || '-'}</span></div>
           </div>
 
           <p className="ml-10 italic font-medium">(Atas dasar SKP Terakhir tentang gaji / pangkat yang telah ditetapkan) :</p>
           
-          <div className="grid grid-cols-[60px_140px_10px_1fr] gap-y-0.5 ml-4">
-            <div></div><div>a. Oleh Pejabat</div><div>:</div><div className="uppercase">{agencyConfig.jabatanKepala} {agencyConfig.namaSkpdPendek}</div>
+          <div className="grid grid-cols-[60px_130px_10px_1fr] gap-y-0.5 ml-4">
+            <div></div><div>a. Oleh Pejabat</div><div>:</div><div className="uppercase">KEPALA DPMPTSP PROVINSI NTB</div>
             <div></div><div>b. Tanggal</div><div>:</div><div>{formData.tglSkpTerakhir ? formatDate(formData.tglSkpTerakhir) : '-'}</div>
             <div></div><div>c. Nomor</div><div>:</div><div>{formData.nomorSkpTerakhir || '-'}</div>
             <div></div><div>d. Tanggal mulai berlaku</div><div>:</div><div>{formData.tglMulaiGajiLama ? formatDate(formData.tglMulaiGajiLama) : '-'}</div>
@@ -120,54 +96,30 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
 
           <p>Diberikan kenaikan gaji berkala hingga memperoleh :</p>
 
-          <div className="grid grid-cols-[30px_200px_10px_1fr] gap-y-0.5 ml-4">
-            <div className="font-bold">6.</div><div className="font-bold">Gaji Pokok Baru</div><div className="font-bold">:</div>
-            <div>
-              <span className="font-bold">Rp. {formData.gajiPokokBaru || '-'},-</span>
-              {formData.gajiPokokBaru && (
-                <p className="italic text-[11pt]">({terbilang(formData.gajiPokokBaru)} Rupiah)</p>
-              )}
-            </div>
+          <div className="grid grid-cols-[30px_170px_10px_1fr] gap-y-1 ml-4">
+            <div className="font-bold">6.</div><div className="font-bold">Gaji Pokok Baru</div><div className="font-bold">:</div><div className="font-bold">Rp. {formData.gajiPokokBaru || '-'}</div>
             <div>7.</div><div>Berdasarkan Masa Kerja</div><div>:</div><div>{formData.masaKerjaBaru || '-'}</div>
             <div>8.</div><div>Dalam Golongan / Ruang</div><div>:</div><div>{formData.golonganBaru || formData.golongan}</div>
             <div className="font-bold">9.</div><div className="font-bold">Mulai Tanggal</div><div className="font-bold">:</div><div className="font-bold">{formData.tmtKgb ? formatDate(formData.tmtKgb) : '-'}</div>
-            <div>10.</div><div>Keterangan</div><div>:</div><div className="whitespace-pre-line">{formData.keterangan || '-'}</div>
           </div>
         </div>
 
-        <div className="text-[13pt] mt-3 leading-tight">
-          <p>Diharapkan agar sesuai dengan Peraturan Pemerintah Nomor 5 Tahun 2024 kepada Pegawai tersebut dapat dibayarkan penghasilannya berdasarkan gaji pokoknya yang baru.</p>
-        </div>
-
-        <div className="mt-6 flex justify-end">
-          <div className="text-left w-[350px] text-[13pt] leading-tight">
-            <p className="font-bold uppercase italic">a.n. GUBERNUR {agencyConfig.namaPemerintah.split(' ').slice(2).join(' ')}</p>
-            <p className="font-bold uppercase ml-8">{agencyConfig.jabatanKepala},</p>
-            <div className="h-16"></div>
-            <p className="font-bold underline uppercase tracking-tight">{agencyConfig.namaKepala}</p>
-            <p className="font-medium">{agencyConfig.pangkatKepala}</p>
-            <p>NIP. {agencyConfig.nipKepala}</p>
+        <div className="mt-12 flex justify-end">
+          <div className="text-left w-[300px] text-[12px]">
+            <p className="font-bold uppercase italic">a.n. GUBERNUR NUSA TENGGARA BARAT</p>
+            <p className="font-bold uppercase ml-8">KEPALA DINAS,</p>
+            <div className="h-20"></div>
+            <p className="font-bold underline uppercase tracking-tight">H. Irnadi Kusuma, S.STP., ME</p>
+            <p className="font-medium">Pembina Utama Muda (IV/c)</p>
+            <p>NIP. 19771231 199703 1 004</p>
           </div>
-        </div>
-
-        <div className="mt-2 text-[11pt] border-t border-slate-200 pt-2 print:border-none">
-          <p className="font-bold">Tembusan disampaikan kepada Yth. :</p>
-          <ol className="list-decimal ml-4 mt-1 space-y-0.5">
-            <li>Inspektur Inspektorat Provinsi NTB di Mataram;</li>
-            <li>Kepala Badan Kepegawaian Daerah Provinsi NTB di Mataram;</li>
-            <li>Kepala Badan Keuangan Dan Aset Daerah di Mataram;</li>
-            <li>Kepala TASPEN (PERSERO) Cabang Mataram di Mataram;</li>
-            <li>Pembuat Daftar Gaji pada {agencyConfig.namaSkpdPendek} di Mataram;</li>
-            <li>PNS yang bersangkutan;</li>
-            <li>Arsip.</li>
-          </ol>
         </div>
       </div>
     </div>
   );
 };
 
-const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, onDelete, initialData, deptLogo, agencyConfig }) => {
+const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, onDelete, initialData, deptLogo }) => {
   const [activeTab, setActiveTab] = useState<'DATA' | 'SKP_LAMA' | 'SKP_BARU'>('DATA');
   const [isScanning, setIsScanning] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -180,7 +132,7 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, 
     tempatLahir: '',
     tanggalLahir: '',
     noHp: '',
-    unitKerja: agencyConfig.namaSkpdPendek,
+    unitKerja: 'DPMPTSP PROV. NTB',
     gajiPokokLama: '',
     nomorSkpTerakhir: '',
     tglSkpTerakhir: '',
@@ -191,7 +143,6 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, 
     golonganBaru: '',
     tmtGolongan: '',
     tmtKgb: '',
-    tglSuratKgb: '',
     keterangan: '',
   });
 
@@ -209,7 +160,7 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, 
         tempatLahir: '',
         tanggalLahir: '',
         noHp: '',
-        unitKerja: agencyConfig.namaSkpdPendek,
+        unitKerja: 'DPMPTSP PROV. NTB',
         gajiPokokLama: '',
         nomorSkpTerakhir: '',
         tglSkpTerakhir: '',
@@ -220,13 +171,12 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, 
         golonganBaru: '',
         tmtGolongan: '',
         tmtKgb: '',
-        tglSuratKgb: '',
         keterangan: '',
       });
     }
     setActiveTab('DATA');
     setShowPreview(false);
-  }, [initialData, isOpen, agencyConfig]);
+  }, [initialData, isOpen]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -270,7 +220,7 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, 
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-fadeIn">
       <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[95vh] border border-slate-100">
         
-        {showPreview && <LetterPreview formData={formData} setShowPreview={setShowPreview} deptLogo={deptLogo} agencyConfig={agencyConfig} />}
+        {showPreview && <LetterPreview formData={formData} setShowPreview={setShowPreview} deptLogo={deptLogo} />}
 
         <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-white">
           <div className="flex items-center space-x-4">
@@ -318,41 +268,41 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, 
               <div className="grid grid-cols-2 gap-6 animate-fadeIn">
                 <div className="col-span-2">
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nama Lengkap & Gelar</label>
-                  <input required name="nama" value={formData.nama || ''} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-300 transition-all" />
+                  <input required name="nama" value={formData.nama} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-300 transition-all" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">NIP</label>
-                  <input required name="nip" value={formData.nip || ''} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                  <input required name="nip" value={formData.nip} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Golongan Saat Ini</label>
-                  <select name="golongan" value={formData.golongan || ''} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none">
+                  <select name="golongan" value={formData.golongan} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none">
                     {Object.values(Golongan).map(g => <option key={g} value={g}>{g}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">TMT Golongan</label>
-                  <input type="date" name="tmtGolongan" value={formData.tmtGolongan || ''} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                  <input type="date" name="tmtGolongan" value={formData.tmtGolongan} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
                 <div className="col-span-2">
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Jabatan</label>
-                  <input required name="jabatan" value={formData.jabatan || ''} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                  <input required name="jabatan" value={formData.jabatan} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Tempat Lahir</label>
-                  <input name="tempatLahir" value={formData.tempatLahir || ''} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                  <input name="tempatLahir" value={formData.tempatLahir} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Tanggal Lahir</label>
-                  <input type="date" name="tanggalLahir" value={formData.tanggalLahir || ''} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                  <input type="date" name="tanggalLahir" value={formData.tanggalLahir} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Unit Kerja</label>
-                  <input name="unitKerja" value={formData.unitKerja || ''} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                  <input name="unitKerja" value={formData.unitKerja} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">No. HP / WhatsApp</label>
-                  <input name="noHp" value={formData.noHp || ''} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                  <input name="noHp" value={formData.noHp} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
               </div>
             )}
@@ -369,24 +319,24 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, 
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Gaji Pokok Lama</label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">Rp</span>
-                    <input name="gajiPokokLama" value={formData.gajiPokokLama || ''} onChange={handleInputChange} placeholder="0" className="w-full pl-10 pr-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                    <input name="gajiPokokLama" value={formData.gajiPokokLama} onChange={handleInputChange} placeholder="0" className="w-full pl-10 pr-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Masa Kerja Golongan</label>
-                  <input name="masaKerjaGolonganLama" value={formData.masaKerjaGolonganLama || ''} onChange={handleInputChange} placeholder="Contoh: 10 Tahun 00 Bulan" className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                  <input name="masaKerjaGolonganLama" value={formData.masaKerjaGolonganLama} onChange={handleInputChange} placeholder="Contoh: 10 Tahun 00 Bulan" className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
                 <div className="col-span-2">
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nomor SKP / SK KGB Terakhir</label>
-                  <input name="nomorSkpTerakhir" value={formData.nomorSkpTerakhir || ''} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                  <input name="nomorSkpTerakhir" value={formData.nomorSkpTerakhir} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Tanggal SKP</label>
-                  <input type="date" name="tglSkpTerakhir" value={formData.tglSkpTerakhir || ''} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                  <input type="date" name="tglSkpTerakhir" value={formData.tglSkpTerakhir} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Tanggal Mulai Berlaku</label>
-                  <input type="date" name="tglMulaiGajiLama" value={formData.tglMulaiGajiLama || ''} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                  <input type="date" name="tglMulaiGajiLama" value={formData.tglMulaiGajiLama} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
               </div>
             )}
@@ -407,28 +357,24 @@ const EmployeeModal: React.FC<EmployeeModalProps> = ({ isOpen, onClose, onSave, 
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Gaji Pokok Baru</label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">Rp</span>
-                    <input name="gajiPokokBaru" value={formData.gajiPokokBaru || ''} onChange={handleInputChange} className="w-full pl-10 pr-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                    <input name="gajiPokokBaru" value={formData.gajiPokokBaru} onChange={handleInputChange} className="w-full pl-10 pr-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">TMT KGB (Mulai Tanggal)</label>
-                  <input type="date" name="tmtKgb" value={formData.tmtKgb || ''} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                  <input type="date" name="tmtKgb" value={formData.tmtKgb} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Masa Kerja Baru</label>
-                  <input name="masaKerjaBaru" value={formData.masaKerjaBaru || ''} onChange={handleInputChange} placeholder="Contoh: 12 Tahun 00 Bulan" className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                  <input name="masaKerjaBaru" value={formData.masaKerjaBaru} onChange={handleInputChange} placeholder="Contoh: 12 Tahun 00 Bulan" className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Golongan/Ruang Baru</label>
-                  <input name="golonganBaru" value={formData.golonganBaru || ''} onChange={handleInputChange} placeholder="Contoh: III/d" className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Tanggal Surat Dibuat</label>
-                  <input type="date" name="tglSuratKgb" value={formData.tglSuratKgb || ''} onChange={handleInputChange} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                  <input name="golonganBaru" value={formData.golonganBaru} onChange={handleInputChange} placeholder="Contoh: III/d" className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
                 <div className="col-span-2">
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Keterangan / Catatan</label>
-                  <textarea name="keterangan" value={formData.keterangan || ''} onChange={handleInputChange} rows={3} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
+                  <textarea name="keterangan" value={formData.keterangan} onChange={handleInputChange} rows={3} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none" />
                 </div>
               </div>
             )}
