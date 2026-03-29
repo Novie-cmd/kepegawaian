@@ -8,7 +8,21 @@ import EmployeeModal from './components/EmployeeModal';
 import LoginView from './components/LoginView';
 import { getNextPromotion, getNextKgb, getRetirementDate, isNear, isDueInPeriod, isDueSoon, parseDateString } from './utils/dateUtils';
 import { getAIAnalysis } from './services/geminiService';
-import { supabase, isSupabaseConfigured } from './services/supabaseClient';
+import { 
+  db, 
+  auth, 
+  onAuthStateChanged, 
+  onSnapshot, 
+  collection, 
+  doc, 
+  setDoc, 
+  deleteDoc, 
+  query, 
+  where, 
+  OperationType, 
+  handleFirestoreError,
+  signOut
+} from './firebase';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 const MONTHS = [
@@ -20,10 +34,10 @@ const DEFAULT_LOGO = "https://upload.wikimedia.org/wikipedia/commons/0/07/Coat_o
 
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isAuthReady, setIsAuthReady] = useState<boolean>(false);
   const [currentView, setCurrentView] = useState<ViewType>('DASHBOARD');
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
-  const [dbMode, setDbMode] = useState<'CLOUD' | 'LOCAL'>('LOCAL');
   const [aiReport, setAiReport] = useState<string>('');
   const [isLoadingAi, setIsLoadingAi] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -41,42 +55,59 @@ const App: React.FC = () => {
   const [filterYear, setFilterYear] = useState<number>(new Date().getFullYear());
 
   useEffect(() => {
-    const session = sessionStorage.getItem('hr_pro_auth');
-    if (session === 'true') {
-      setIsAuthenticated(true);
-    }
-    
-    const savedLogo = localStorage.getItem('dept_logo_base64');
-    if (savedLogo) {
-      setDeptLogo(savedLogo);
-    }
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      setIsAuthenticated(!!user);
+      setIsAuthReady(true);
+    });
 
-    const savedConfig = localStorage.getItem('agency_config');
-    if (savedConfig) {
-      try {
-        setAgencyConfig(JSON.parse(savedConfig));
-      } catch (e) {
-        console.error("Gagal memuat konfigurasi instansi");
-      }
-    }
+    return () => unsubscribeAuth();
   }, []);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      loadInitialData();
-    }
+    if (!isAuthenticated || !auth.currentUser) return;
+
+    setIsLoadingData(true);
+    
+    // Listen to Employees
+    const qEmployees = query(collection(db, 'employees'), where('uid', '==', auth.currentUser.uid));
+    const unsubscribeEmployees = onSnapshot(qEmployees, (snapshot) => {
+      const emps = snapshot.docs.map(doc => doc.data() as Employee);
+      setEmployees(emps);
+      setIsLoadingData(false);
+      setLastSync(new Date().toLocaleTimeString('id-ID'));
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'employees');
+    });
+
+    // Listen to Agency Config
+    const qConfig = query(collection(db, 'agency_configs'), where('uid', '==', auth.currentUser.uid));
+    const unsubscribeConfig = onSnapshot(qConfig, (snapshot) => {
+      if (!snapshot.empty) {
+        setAgencyConfig(snapshot.docs[0].data() as AgencyConfig);
+      }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'agency_configs');
+    });
+
+    return () => {
+      unsubscribeEmployees();
+      unsubscribeConfig();
+    };
   }, [isAuthenticated]);
 
   const handleLogin = (status: boolean) => {
     if (status) {
       setIsAuthenticated(true);
-      sessionStorage.setItem('hr_pro_auth', 'true');
     }
   };
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    sessionStorage.removeItem('hr_pro_auth');
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setIsAuthenticated(false);
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -100,122 +131,42 @@ const App: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
-  const handleSaveConfig = (newConfig: AgencyConfig) => {
-    setAgencyConfig(newConfig);
-    localStorage.setItem('agency_config', JSON.stringify(newConfig));
-    setToast({ message: 'Profil instansi berhasil diperbarui!', type: 'success' });
-    setTimeout(() => setToast(null), 3000);
-  };
-
-  const loadInitialData = async () => {
-    setIsLoadingData(true);
+  const handleSaveConfig = async (newConfig: AgencyConfig) => {
+    if (!auth.currentUser) return;
     
-    if (isSupabaseConfigured && supabase) {
-      try {
-        const { data, error } = await supabase
-          .from('employees')
-          .select('*')
-          .order('nama', { ascending: true });
-
-        if (error) throw error;
-        
-        setEmployees(data || []);
-        setDbMode('CLOUD');
-        setLastSync(new Date().toLocaleTimeString('id-ID'));
-        setToast({ message: 'Data Online Berhasil Disinkronkan', type: 'success' });
-      } catch (err: any) {
-        console.warn("Koneksi Cloud bermasalah:", err.message);
-        const savedEmployees = localStorage.getItem('local_employees');
-        if (savedEmployees) {
-          try {
-            setEmployees(JSON.parse(savedEmployees));
-          } catch (e) {
-            setEmployees(MOCK_EMPLOYEES);
-          }
-        } else {
-          setEmployees(MOCK_EMPLOYEES);
-        }
-        setDbMode('LOCAL');
-      }
-    } else {
-      const savedEmployees = localStorage.getItem('local_employees');
-      if (savedEmployees) {
-        try {
-          setEmployees(JSON.parse(savedEmployees));
-        } catch (e) {
-          setEmployees(MOCK_EMPLOYEES);
-        }
-      } else {
-        setEmployees(MOCK_EMPLOYEES);
-      }
-      setDbMode('LOCAL');
-    }
-    
-    setIsLoadingData(false);
-    setTimeout(() => setToast(null), 3000);
-  };
-
-  const fetchEmployees = async () => {
-    if (!supabase || dbMode === 'LOCAL') return;
     try {
-      const { data, error } = await supabase
-        .from('employees')
-        .select('*')
-        .order('nama', { ascending: true });
-
-      if (error) throw error;
-      setEmployees(data || []);
-      setLastSync(new Date().toLocaleTimeString('id-ID'));
-    } catch (err: any) {
-      console.error("Sinkronisasi gagal:", err.message);
+      const configWithUid = { ...newConfig, uid: auth.currentUser.uid };
+      // Use a fixed ID for the user's config or search for existing
+      const configId = auth.currentUser.uid; 
+      await setDoc(doc(db, 'agency_configs', configId), configWithUid);
+      
+      setAgencyConfig(configWithUid);
+      setToast({ message: 'Profil instansi berhasil diperbarui!', type: 'success' });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, 'agency_configs');
     }
+    setTimeout(() => setToast(null), 3000);
   };
 
   const handleSaveEmployee = async (emp: Employee) => {
-    if (dbMode === 'CLOUD' && supabase) {
-      try {
-        const payload = { ...emp };
-        delete (payload as any).avatar;
+    if (!auth.currentUser) return;
 
-        let result;
-        if (selectedEmployee) {
-          result = await supabase.from('employees').update(payload).eq('id', emp.id);
-        } else {
-          result = await supabase.from('employees').insert([payload]);
-        }
-        
-        if (result.error) throw result.error;
-        await fetchEmployees();
-        setToast({ message: 'Berhasil disimpan ke Cloud (Terlihat oleh semua staf)!', type: 'success' });
-      } catch (err: any) {
-        setToast({ message: 'Gagal simpan ke cloud: ' + err.message, type: 'error' });
-      }
-    } else {
-      let updatedEmployees;
-      if (selectedEmployee) {
-        updatedEmployees = employees.map(e => e.id === emp.id ? emp : e);
-      } else {
-        updatedEmployees = [emp, ...employees];
-      }
-      setEmployees(updatedEmployees);
-      localStorage.setItem('local_employees', JSON.stringify(updatedEmployees));
-      setToast({ message: 'Data disimpan di penyimpanan lokal browser', type: 'info' });
+    try {
+      const empWithUid = { ...emp, uid: auth.currentUser.uid };
+      await setDoc(doc(db, 'employees', emp.id), empWithUid);
+      setToast({ message: 'Berhasil disimpan ke Cloud!', type: 'success' });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, 'employees');
     }
     setTimeout(() => setToast(null), 3000);
   };
 
   const handleDeleteEmployee = async (id: string) => {
-    if (dbMode === 'CLOUD' && supabase) {
-      try {
-        await supabase.from('employees').delete().eq('id', id);
-        await fetchEmployees();
-        setToast({ message: 'Data dihapus dari sistem online', type: 'success' });
-      } catch (err) {}
-    } else {
-      const updatedEmployees = employees.filter(e => e.id !== id);
-      setEmployees(updatedEmployees);
-      localStorage.setItem('local_employees', JSON.stringify(updatedEmployees));
-      setToast({ message: 'Data dihapus dari penyimpanan lokal', type: 'success' });
+    try {
+      await deleteDoc(doc(db, 'employees', id));
+      setToast({ message: 'Data dihapus dari sistem online', type: 'success' });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.DELETE, 'employees');
     }
     setTimeout(() => setToast(null), 3000);
   };
@@ -273,6 +224,12 @@ const App: React.FC = () => {
     return years;
   }, []);
 
+  if (!isAuthReady) return (
+    <div className="flex items-center justify-center h-screen bg-slate-900">
+      <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+  );
+
   if (!isAuthenticated) return <LoginView onLogin={handleLogin} />;
 
   return (
@@ -287,11 +244,11 @@ const App: React.FC = () => {
         </div>
         
         <div className="px-8 py-4 space-y-3">
-           <div className={`flex items-center space-x-2 px-4 py-2 rounded-xl border text-[9px] font-black uppercase tracking-widest ${dbMode === 'CLOUD' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-orange-500/10 border-orange-500/20 text-orange-400'}`}>
-              <div className={`w-2 h-2 rounded-full ${dbMode === 'CLOUD' ? 'bg-emerald-500 animate-pulse' : 'bg-orange-500'}`}></div>
-              <span>Status: {dbMode === 'CLOUD' ? 'Online & Terbagi' : 'Mode Offline'}</span>
+           <div className={`flex items-center space-x-2 px-4 py-2 rounded-xl border text-[9px] font-black uppercase tracking-widest ${isAuthenticated ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-orange-500/10 border-orange-500/20 text-orange-400'}`}>
+              <div className={`w-2 h-2 rounded-full ${isAuthenticated ? 'bg-emerald-500 animate-pulse' : 'bg-orange-500'}`}></div>
+              <span>Status: {isAuthenticated ? 'Online & Terbagi' : 'Terputus'}</span>
            </div>
-           {dbMode === 'CLOUD' && (
+           {isAuthenticated && (
              <div className="px-4 text-[8px] text-slate-500 font-bold uppercase tracking-widest">
                 Sinkron Terakhir: {lastSync}
              </div>
@@ -335,12 +292,12 @@ const App: React.FC = () => {
         <header className="bg-white border-b border-gray-100 px-10 py-8 flex items-center justify-between z-10 shadow-sm">
           <div>
             <h1 className="text-3xl font-black text-slate-900 tracking-tight">{NAV_ITEMS.find(n => n.id === currentView)?.label}</h1>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Sistem Kolaborasi Kepegawaian</p>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Sistem Kolaborasi Kepegawaian (Firebase)</p>
           </div>
           <div className="flex items-center space-x-6">
             <button 
-              onClick={loadInitialData}
-              title="Refresh Data Online"
+              onClick={() => { setToast({message: 'Data tersinkronisasi otomatis', type: 'info'}); setTimeout(()=>setToast(null), 2000); }}
+              title="Status Sinkronisasi"
               className="p-3.5 bg-slate-50 text-slate-400 hover:text-indigo-600 rounded-2xl border border-slate-100 hover:border-indigo-100 transition-all"
             >
               <svg className={`w-5 h-5 ${isLoadingData ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
@@ -422,7 +379,7 @@ const App: React.FC = () => {
                   <div className="flex justify-between items-center">
                     <div>
                       <h2 className="text-2xl font-black text-slate-900 tracking-tight">Database Pusat</h2>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Terhubung: {dbMode === 'CLOUD' ? 'Cloud NTB' : 'Internal'}</p>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Terhubung: Cloud Firebase</p>
                     </div>
                     <div className="flex items-center space-x-3">
                       <input type="file" ref={logoInputRef} onChange={handleLogoUpload} className="hidden" accept=".ico,.png,.jpg,.jpeg" />

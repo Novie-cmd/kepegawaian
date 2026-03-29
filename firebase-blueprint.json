@@ -1,0 +1,65 @@
+{
+  "entities": {
+    "Employee": {
+      "title": "Employee",
+      "description": "Data pegawai negeri sipil",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "nip": { "type": "string" },
+        "nama": { "type": "string" },
+        "jabatan": { "type": "string" },
+        "golongan": { "type": "string" },
+        "tmtGolongan": { "type": "string" },
+        "tmtKgb": { "type": "string" },
+        "tanggalLahir": { "type": "string" },
+        "unitKerja": { "type": "string" },
+        "avatar": { "type": "string" },
+        "tempatLahir": { "type": "string" },
+        "noHp": { "type": "string" },
+        "gajiPokokLama": { "type": "string" },
+        "nomorSkpTerakhir": { "type": "string" },
+        "tglSkpTerakhir": { "type": "string" },
+        "tglMulaiGajiLama": { "type": "string" },
+        "masaKerjaGolonganLama": { "type": "string" },
+        "gajiPokokBaru": { "type": "string" },
+        "masaKerjaBaru": { "type": "string" },
+        "golonganBaru": { "type": "string" },
+        "tglSuratKgb": { "type": "string" },
+        "keterangan": { "type": "string" },
+        "uid": { "type": "string" }
+      },
+      "required": ["id", "nip", "nama", "uid"]
+    },
+    "AgencyConfig": {
+      "title": "AgencyConfig",
+      "description": "Konfigurasi instansi/dinas",
+      "type": "object",
+      "properties": {
+        "namaPemerintah": { "type": "string" },
+        "namaSkpd": { "type": "string" },
+        "namaSkpdPendek": { "type": "string" },
+        "alamat": { "type": "string" },
+        "telepon": { "type": "string" },
+        "fax": { "type": "string" },
+        "email": { "type": "string" },
+        "namaKepala": { "type": "string" },
+        "nipKepala": { "type": "string" },
+        "pangkatKepala": { "type": "string" },
+        "jabatanKepala": { "type": "string" },
+        "uid": { "type": "string" }
+      },
+      "required": ["namaPemerintah", "namaSkpd", "uid"]
+    }
+  },
+  "firestore": {
+    "/employees/{employeeId}": {
+      "schema": "Employee",
+      "description": "Koleksi data pegawai"
+    },
+    "/agency_configs/{configId}": {
+      "schema": "AgencyConfig",
+      "description": "Koleksi konfigurasi instansi"
+    }
+  }
+}

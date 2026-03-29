@@ -33,6 +33,7 @@ export interface Employee {
   golonganBaru?: string;
   tglSuratKgb?: string;
   keterangan?: string;
+  uid?: string;
 }
 
 export interface AgencyConfig {
@@ -49,6 +50,7 @@ export interface AgencyConfig {
   nipKepala: string;
   pangkatKepala: string;
   jabatanKepala: string;
+  uid?: string;
 }
 
 export type ViewType = 'DASHBOARD' | 'DATA_PEGAWAI' | 'KONTROL_PANGKAT' | 'KONTROL_KGB' | 'KONTROL_PENSIUN' | 'AI_REPORT' | 'DATA_DINAS';
