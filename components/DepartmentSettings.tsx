@@ -16,7 +16,7 @@ const DepartmentSettings: React.FC<DepartmentSettingsProps> = ({ onSaveSuccess }
     namaKepalaDinas: 'H. Irnadi Kusuma, S.STP., ME',
     nipKepalaDinas: '19771231 199703 1 004',
     jabatanKepalaDinas: 'Pembina Utama Muda (IV/c)',
-    alamat: 'Jalan Udayana No. 4 Selaparang. Kota Mataram, Nusa Tenggara Barat 83122',
+    alamat: 'Jl. Pendidikan No.2, Dasan Agung - Mataram NTB',
     telepon: '(0370) 631060 - 632632',
     email: '',
     website: ''

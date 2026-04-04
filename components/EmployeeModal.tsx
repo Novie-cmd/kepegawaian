@@ -47,9 +47,9 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
              <img src={deptLogo || "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Coat_of_arms_of_West_Nusa_Tenggara.png/600px-Coat_of_arms_of_West_Nusa_Tenggara.png"} alt="Logo Instansi" className="h-28 w-auto object-contain block" crossOrigin="anonymous" />
           </div>
           <div className="text-center px-32">
-            <h1 className="text-[18px] font-bold uppercase leading-tight whitespace-nowrap">{deptInfo?.namaDinas || 'Badan Kesatuan Bangsa dan Politik Dalam Negeri'}</h1>
-            <h2 className="text-[14px] font-bold uppercase tracking-tight leading-tight mt-0.5">Provinsi Nusa Tenggara Barat</h2>
-            <p className="text-[10px] mt-2 font-sans font-normal">{deptInfo?.alamat || 'Jalan Udayana No. 4 Selaparang. Kota Mataram, Nusa Tenggara Barat 83122'}</p>
+            <h1 className="text-[14px] font-bold uppercase tracking-tight leading-tight">Pemerintah Daerah Provinsi Nusa Tenggara Barat</h1>
+            <h2 className="text-[18px] font-bold uppercase leading-tight whitespace-nowrap mt-0.5">{deptInfo?.namaDinas || 'Badan Kesatuan Bangsa dan Politik Dalam Negeri'}</h2>
+            <p className="text-[10px] mt-2 font-sans font-normal">{deptInfo?.alamat || 'Jl. Pendidikan No.2, Dasan Agung - Mataram NTB'}</p>
             <p className="text-[10px] font-sans font-normal">Telepon {deptInfo?.telepon || '(0370) 631060 - 632632'}</p>
           </div>
         </div>
