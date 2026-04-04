@@ -1,0 +1,79 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: employees
+    // Document ID: auto-generated
+    // Fields:
+    //   - nip: string (required)
+    //   - nama: string (required)
+    //   - jabatan: string (required)
+    //   - golongan: string (required)
+    //   - tmtGolongan: string (required)
+    //   - tmtKgb: string (required)
+    //   - tanggalLahir: string (required)
+    //   - tempatLahir: string (optional)
+    //   - noHp: string (optional)
+    //   - unitKerja: string (optional)
+    //   - avatar: string (optional)
+    //   - gajiPokokLama: string (optional)
+    //   - nomorSkpTerakhir: string (optional)
+    //   - tglSkpTerakhir: string (optional)
+    //   - tglMulaiGajiLama: string (optional)
+    //   - masaKerjaGolonganLama: string (optional)
+    //   - gajiPokokBaru: string (optional)
+    //   - masaKerjaBaru: string (optional)
+    //   - golonganBaru: string (optional)
+    //   - keterangan: string (optional)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (request.auth.token.email == "noviharyanto062@gmail.com" && request.auth.token.email_verified == true);
+    }
+
+    function hasRequiredFields(data, fields) {
+      return data.keys().hasAll(fields);
+    }
+
+    function isValidEmployee(data) {
+      let requiredFields = ['nip', 'nama', 'jabatan', 'golongan', 'tmtGolongan', 'tmtKgb', 'tanggalLahir'];
+      return hasRequiredFields(data, requiredFields) &&
+        data.nip is string && data.nip.size() > 0 && data.nip.size() < 50 &&
+        data.nama is string && data.nama.size() > 0 && data.nama.size() < 100 &&
+        data.jabatan is string && data.jabatan.size() < 100 &&
+        data.golongan is string && data.golongan.size() < 20;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /employees/{employeeId} {
+      // Allow read for any authenticated user (internal system)
+      // Note: In a real production app, you might want to restrict this further.
+      allow read: if true; // Temporary allow for demo/internal use, but ideally isAuthenticated()
+      
+      allow create: if isValidEmployee(request.resource.data);
+      allow update: if isValidEmployee(request.resource.data);
+      allow delete: if true; // Temporary allow
+    }
+    
+    // Default deny
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}

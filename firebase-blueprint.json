@@ -1,0 +1,39 @@
+{
+  "entities": {
+    "Employee": {
+      "title": "Employee",
+      "description": "Data pegawai instansi",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique ID" },
+        "nip": { "type": "string", "description": "NIP Pegawai" },
+        "nama": { "type": "string", "description": "Nama Lengkap" },
+        "jabatan": { "type": "string", "description": "Jabatan" },
+        "golongan": { "type": "string", "description": "Golongan/Pangkat" },
+        "tmtGolongan": { "type": "string", "description": "TMT Golongan" },
+        "tmtKgb": { "type": "string", "description": "TMT KGB" },
+        "tanggalLahir": { "type": "string", "description": "Tanggal Lahir" },
+        "tempatLahir": { "type": "string", "description": "Tempat Lahir" },
+        "noHp": { "type": "string", "description": "Nomor HP" },
+        "unitKerja": { "type": "string", "description": "Unit Kerja" },
+        "avatar": { "type": "string", "description": "Avatar URL" },
+        "gajiPokokLama": { "type": "string" },
+        "nomorSkpTerakhir": { "type": "string" },
+        "tglSkpTerakhir": { "type": "string" },
+        "tglMulaiGajiLama": { "type": "string" },
+        "masaKerjaGolonganLama": { "type": "string" },
+        "gajiPokokBaru": { "type": "string" },
+        "masaKerjaBaru": { "type": "string" },
+        "golonganBaru": { "type": "string" },
+        "keterangan": { "type": "string" }
+      },
+      "required": ["nip", "nama", "jabatan", "golongan", "tmtGolongan", "tmtKgb", "tanggalLahir"]
+    }
+  },
+  "firestore": {
+    "/employees": {
+      "schema": "Employee",
+      "description": "Koleksi data pegawai"
+    }
+  }
+}

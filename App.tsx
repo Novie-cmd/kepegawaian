@@ -8,7 +8,18 @@ import EmployeeModal from './components/EmployeeModal';
 import LoginView from './components/LoginView';
 import { getNextPromotion, getNextKgb, getRetirementDate, isNear, isDueInPeriod, isDueSoon, parseDateString } from './utils/dateUtils';
 import { getAIAnalysis } from './services/geminiService';
-import { supabase, isSupabaseConfigured } from './services/supabaseClient';
+import { db, auth } from './firebase';
+import { 
+  collection, 
+  getDocs, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc, 
+  doc, 
+  query, 
+  orderBy,
+  onSnapshot
+} from 'firebase/firestore';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 const MONTHS = [
@@ -52,9 +63,42 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+
     if (isAuthenticated) {
-      loadInitialData();
+      setIsLoadingData(true);
+      try {
+        const q = query(collection(db, 'employees'), orderBy('nama', 'asc'));
+        
+        unsubscribe = onSnapshot(q, (snapshot) => {
+          const data = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          })) as Employee[];
+          
+          setEmployees(data);
+          setDbMode('CLOUD');
+          setLastSync(new Date().toLocaleTimeString('id-ID'));
+          setIsLoadingData(false);
+          setToast({ message: 'Data Online Berhasil Disinkronkan', type: 'success' });
+          setTimeout(() => setToast(null), 3000);
+        }, (error) => {
+          console.warn("Koneksi Cloud bermasalah:", error.message);
+          setEmployees(MOCK_EMPLOYEES);
+          setDbMode('LOCAL');
+          setIsLoadingData(false);
+        });
+      } catch (err: any) {
+        console.warn("Koneksi Cloud bermasalah:", err.message);
+        setEmployees(MOCK_EMPLOYEES);
+        setDbMode('LOCAL');
+        setIsLoadingData(false);
+      }
     }
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, [isAuthenticated]);
 
   const handleLogin = (status: boolean) => {
@@ -84,67 +128,21 @@ const App: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
-  const loadInitialData = async () => {
-    setIsLoadingData(true);
-    
-    if (isSupabaseConfigured && supabase) {
-      try {
-        const { data, error } = await supabase
-          .from('employees')
-          .select('*')
-          .order('nama', { ascending: true });
-
-        if (error) throw error;
-        
-        setEmployees(data || []);
-        setDbMode('CLOUD');
-        setLastSync(new Date().toLocaleTimeString('id-ID'));
-        setToast({ message: 'Data Online Berhasil Disinkronkan', type: 'success' });
-      } catch (err: any) {
-        console.warn("Koneksi Cloud bermasalah:", err.message);
-        setEmployees(MOCK_EMPLOYEES);
-        setDbMode('LOCAL');
-      }
-    } else {
-      setEmployees(MOCK_EMPLOYEES);
-      setDbMode('LOCAL');
-    }
-    
-    setIsLoadingData(false);
-    setTimeout(() => setToast(null), 3000);
-  };
-
-  const fetchEmployees = async () => {
-    if (!supabase || dbMode === 'LOCAL') return;
-    try {
-      const { data, error } = await supabase
-        .from('employees')
-        .select('*')
-        .order('nama', { ascending: true });
-
-      if (error) throw error;
-      setEmployees(data || []);
-      setLastSync(new Date().toLocaleTimeString('id-ID'));
-    } catch (err: any) {
-      console.error("Sinkronisasi gagal:", err.message);
-    }
-  };
-
   const handleSaveEmployee = async (emp: Employee) => {
-    if (dbMode === 'CLOUD' && supabase) {
+    if (dbMode === 'CLOUD') {
       try {
         const payload = { ...emp };
         delete (payload as any).avatar;
+        // Remove ID from payload if it's a new employee
+        const { id, ...dataToSave } = payload;
 
-        let result;
         if (selectedEmployee) {
-          result = await supabase.from('employees').update(payload).eq('id', emp.id);
+          const docRef = doc(db, 'employees', id);
+          await updateDoc(docRef, dataToSave);
         } else {
-          result = await supabase.from('employees').insert([payload]);
+          await addDoc(collection(db, 'employees'), dataToSave);
         }
         
-        if (result.error) throw result.error;
-        await fetchEmployees();
         setToast({ message: 'Berhasil disimpan ke Cloud (Terlihat oleh semua staf)!', type: 'success' });
       } catch (err: any) {
         setToast({ message: 'Gagal simpan ke cloud: ' + err.message, type: 'error' });
@@ -161,12 +159,13 @@ const App: React.FC = () => {
   };
 
   const handleDeleteEmployee = async (id: string) => {
-    if (dbMode === 'CLOUD' && supabase) {
+    if (dbMode === 'CLOUD') {
       try {
-        await supabase.from('employees').delete().eq('id', id);
-        await fetchEmployees();
+        await deleteDoc(doc(db, 'employees', id));
         setToast({ message: 'Data dihapus dari sistem online', type: 'success' });
-      } catch (err) {}
+      } catch (err: any) {
+        setToast({ message: 'Gagal hapus: ' + err.message, type: 'error' });
+      }
     } else {
       setEmployees(prev => prev.filter(e => e.id !== id));
     }
@@ -292,7 +291,6 @@ const App: React.FC = () => {
           </div>
           <div className="flex items-center space-x-6">
             <button 
-              onClick={loadInitialData}
               title="Refresh Data Online"
               className="p-3.5 bg-slate-50 text-slate-400 hover:text-indigo-600 rounded-2xl border border-slate-100 hover:border-indigo-100 transition-all"
             >
