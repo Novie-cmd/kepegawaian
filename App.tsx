@@ -234,7 +234,7 @@ const App: React.FC = () => {
           <div className="w-10 h-10 bg-indigo-500 rounded-2xl flex items-center justify-center font-black text-2xl">H</div>
           <div>
             <span className="text-xl font-black tracking-tight block">HR-Pro</span>
-            <span className="text-[9px] text-slate-400 font-bold tracking-widest uppercase">DPMPTSP NTB</span>
+            <span className="text-[9px] text-slate-400 font-bold tracking-widest uppercase">KESBANGPOLDAGRI NTB</span>
           </div>
         </div>
         

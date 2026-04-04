@@ -12,7 +12,7 @@ export const MOCK_EMPLOYEES: Employee[] = [
     tmtGolongan: '2021-04-01',
     tmtKgb: '2023-10-01',
     tanggalLahir: '1985-01-01',
-    unitKerja: 'Bidang Tata Ruang - DPMPTSP',
+    unitKerja: 'Bidang Tata Ruang - KESBANGPOLDAGRI',
     avatar: 'https://i.pravatar.cc/150?u=ahmad'
   },
   {
@@ -24,7 +24,7 @@ export const MOCK_EMPLOYEES: Employee[] = [
     tmtGolongan: '2020-10-01',
     tmtKgb: '2022-12-01',
     tanggalLahir: '1992-05-12',
-    unitKerja: 'Sekretariat - DPMPTSP',
+    unitKerja: 'Sekretariat - KESBANGPOLDAGRI',
     avatar: 'https://i.pravatar.cc/150?u=siti'
   },
   {
@@ -36,7 +36,7 @@ export const MOCK_EMPLOYEES: Employee[] = [
     tmtGolongan: '2019-04-01',
     tmtKgb: '2023-01-01',
     tanggalLahir: '1970-08-20',
-    unitKerja: 'Bidang Perizinan - DPMPTSP',
+    unitKerja: 'Bidang Perizinan - KESBANGPOLDAGRI',
     avatar: 'https://i.pravatar.cc/150?u=bambang'
   }
 ];
