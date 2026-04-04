@@ -1,11 +1,12 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { ViewType, Employee } from './types';
+import { ViewType, Employee, DepartmentInfo } from './types';
 import { NAV_ITEMS, MOCK_EMPLOYEES } from './constants';
 import StatCard from './components/StatCard';
 import EmployeeTable from './components/EmployeeTable';
 import EmployeeModal from './components/EmployeeModal';
 import LoginView from './components/LoginView';
+import DepartmentSettings from './components/DepartmentSettings';
 import { getNextPromotion, getNextKgb, getRetirementDate, isNear, isDueInPeriod, isDueSoon, parseDateString } from './utils/dateUtils';
 import { getAIAnalysis } from './services/geminiService';
 import { db, auth } from './firebase';
@@ -42,6 +43,7 @@ const App: React.FC = () => {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'info' | 'error' } | null>(null);
   const [deptLogo, setDeptLogo] = useState<string>(DEFAULT_LOGO);
+  const [deptInfo, setDeptInfo] = useState<DepartmentInfo | null>(null);
   const [lastSync, setLastSync] = useState<string>('');
   
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -64,6 +66,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
+    let unsubscribeDept: (() => void) | undefined;
 
     if (isAuthenticated) {
       setIsLoadingData(true);
@@ -88,6 +91,15 @@ const App: React.FC = () => {
           setDbMode('LOCAL');
           setIsLoadingData(false);
         });
+
+        // Sync Department Info
+        const deptRef = doc(db, 'settings', 'department');
+        unsubscribeDept = onSnapshot(deptRef, (docSnap) => {
+          if (docSnap.exists()) {
+            setDeptInfo(docSnap.data() as DepartmentInfo);
+          }
+        });
+
       } catch (err: any) {
         console.warn("Koneksi Cloud bermasalah:", err.message);
         setEmployees(MOCK_EMPLOYEES);
@@ -98,6 +110,7 @@ const App: React.FC = () => {
 
     return () => {
       if (unsubscribe) unsubscribe();
+      if (unsubscribeDept) unsubscribeDept();
     };
   }, [isAuthenticated]);
 
@@ -435,6 +448,13 @@ const App: React.FC = () => {
                   )}
                 </div>
               )}
+
+              {currentView === 'DATA_DINAS' && (
+                <DepartmentSettings onSaveSuccess={() => {
+                  setToast({ message: 'Data Dinas Berhasil Diperbarui!', type: 'success' });
+                  setTimeout(() => setToast(null), 3000);
+                }} />
+              )}
             </div>
           )}
         </div>
@@ -447,6 +467,7 @@ const App: React.FC = () => {
         initialData={selectedEmployee} 
         onDelete={handleDeleteEmployee} 
         deptLogo={deptLogo}
+        deptInfo={deptInfo}
       />
     </div>
   );

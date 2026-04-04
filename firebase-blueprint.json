@@ -28,12 +28,32 @@
         "keterangan": { "type": "string" }
       },
       "required": ["nip", "nama", "jabatan", "golongan", "tmtGolongan", "tmtKgb", "tanggalLahir"]
+    },
+    "DepartmentInfo": {
+      "title": "DepartmentInfo",
+      "description": "Informasi instansi dan pejabat penanda tangan",
+      "type": "object",
+      "properties": {
+        "namaDinas": { "type": "string" },
+        "namaKepalaDinas": { "type": "string" },
+        "nipKepalaDinas": { "type": "string" },
+        "jabatanKepalaDinas": { "type": "string" },
+        "alamat": { "type": "string" },
+        "telepon": { "type": "string" },
+        "email": { "type": "string" },
+        "website": { "type": "string" }
+      },
+      "required": ["namaDinas", "namaKepalaDinas", "nipKepalaDinas", "jabatanKepalaDinas"]
     }
   },
   "firestore": {
     "/employees": {
       "schema": "Employee",
       "description": "Koleksi data pegawai"
+    },
+    "/settings": {
+      "schema": "DepartmentInfo",
+      "description": "Pengaturan instansi"
     }
   }
 }

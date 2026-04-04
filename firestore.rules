@@ -70,6 +70,11 @@ service cloud.firestore {
       allow update: if isValidEmployee(request.resource.data);
       allow delete: if true; // Temporary allow
     }
+
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
     
     // Default deny
     match /{path=**} {

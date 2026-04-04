@@ -34,4 +34,16 @@ export interface Employee {
   keterangan?: string;
 }
 
-export type ViewType = 'DASHBOARD' | 'DATA_PEGAWAI' | 'KONTROL_PANGKAT' | 'KONTROL_KGB' | 'KONTROL_PENSIUN' | 'AI_REPORT';
+export interface DepartmentInfo {
+  id?: string;
+  namaDinas: string;
+  namaKepalaDinas: string;
+  nipKepalaDinas: string;
+  jabatanKepalaDinas: string;
+  alamat?: string;
+  telepon?: string;
+  email?: string;
+  website?: string;
+}
+
+export type ViewType = 'DASHBOARD' | 'DATA_PEGAWAI' | 'KONTROL_PANGKAT' | 'KONTROL_KGB' | 'KONTROL_PENSIUN' | 'AI_REPORT' | 'DATA_DINAS';
