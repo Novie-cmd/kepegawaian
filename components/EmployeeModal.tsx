@@ -42,13 +42,13 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
           </button>
         </div>
 
-        <div className="flex items-center border-b-[3px] border-black pb-2 mb-1 relative print:mt-2 min-h-[150px]">
-          <div className="w-36 flex-shrink-0 flex justify-center items-center mr-6">
-             <img src={deptLogo || "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Coat_of_arms_of_West_Nusa_Tenggara.png/600px-Coat_of_arms_of_West_Nusa_Tenggara.png"} alt="Logo Instansi" className="h-32 w-auto object-contain block" crossOrigin="anonymous" />
+        <div className="flex items-center border-b-[3px] border-black pb-2 mb-1 relative print:mt-2 min-h-[150px] justify-center">
+          <div className="absolute left-0 w-32 flex justify-center items-center">
+             <img src={deptLogo || "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Coat_of_arms_of_West_Nusa_Tenggara.png/600px-Coat_of_arms_of_West_Nusa_Tenggara.png"} alt="Logo Instansi" className="h-28 w-auto object-contain block" crossOrigin="anonymous" />
           </div>
-          <div className="flex-1 text-center pr-10">
-            <h1 className="text-[15px] font-normal uppercase tracking-tight leading-tight">Pemerintah Provinsi Nusa Tenggara Barat</h1>
-            <h2 className="text-[20px] font-bold uppercase leading-tight mt-1 whitespace-nowrap">{deptInfo?.namaDinas || 'Badan Kesatuan Bangsa dan Politik Dalam Negeri'}</h2>
+          <div className="text-center px-32">
+            <h1 className="text-[14px] font-normal uppercase tracking-tight leading-tight">Pemerintah Provinsi Nusa Tenggara Barat</h1>
+            <h2 className="text-[18px] font-bold uppercase leading-tight mt-1">{deptInfo?.namaDinas || 'Badan Kesatuan Bangsa dan Politik Dalam Negeri'}</h2>
             <p className="text-[10px] mt-2 font-sans font-normal">{deptInfo?.alamat || 'Jalan Udayana No. 4 Selaparang. Kota Mataram, Nusa Tenggara Barat 83122'}</p>
             <p className="text-[10px] font-sans font-normal">Telepon {deptInfo?.telepon || '(0370) 631060 - 632632'}</p>
           </div>
