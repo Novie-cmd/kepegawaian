@@ -48,7 +48,8 @@ const LetterPreview: React.FC<{ formData: Partial<Employee>, setShowPreview: (sh
           </div>
           <div className="flex-1 text-center px-4">
             <h1 className="text-[14px] font-bold uppercase tracking-tight leading-tight">Pemerintah Daerah Provinsi Nusa Tenggara Barat</h1>
-            <h2 className="text-[18px] font-bold uppercase leading-tight mt-0.5">{deptInfo?.namaDinas || 'Badan Kesatuan Bangsa dan Politik Dalam Negeri'}</h2>
+            <h2 className="text-[16px] font-bold uppercase leading-tight mt-0.5 whitespace-nowrap">{deptInfo?.namaDinas || 'Badan Kesatuan Bangsa dan Politik Dalam Negeri'}</h2>
+            <h3 className="text-[14px] font-bold uppercase tracking-tight leading-tight mt-0.5">Provinsi Nusa Tenggara Barat</h3>
             <p className="text-[10px] mt-2 font-sans font-normal">{deptInfo?.alamat || 'Jl. Pendidikan No.2, Dasan Agung - Mataram NTB'}</p>
             <p className="text-[10px] font-sans font-normal">Telepon {deptInfo?.telepon || '(0370) 631060 - 632632'}</p>
           </div>
